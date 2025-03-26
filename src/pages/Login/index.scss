@@ -1,0 +1,109 @@
+.wrap {
+   &-login {
+      font-family: 'Roboto-Regular';
+      height: 100vh;
+      margin-left: auto;
+      margin-right: auto;
+      display: flex;
+      align-content: center;
+      align-items: center;
+      justify-content: center;
+      padding-bottom: 30px;
+      &__block {
+         &-header {
+            display: flex;
+            align-content: center;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 32px;
+            img {
+               margin-right: 16px;
+            }
+            h2 {
+               font-weight: 900;
+               font-size: 46px;
+               line-height: 54px;
+               color: #004c97;
+               padding: 0;
+               margin: 0;
+            }
+         }
+         &-auth {
+            padding: 40px 40px 20px;
+            background: var(--base-background);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            border-radius: 2px;
+            p {
+               color: #8c8c8c;
+               font-size: 14px;
+               line-height: 22px;
+               text-align: center;
+               font-weight: 400;
+               margin: 0;
+               margin-top: -5px;
+            }
+            .ant-list {
+               max-height: 250px;
+               overflow-y: auto;
+               overflow-x: hidden;
+            }
+         }
+         &-auth-alt {
+            display: flex;
+            align-content: center;
+            justify-content: center;
+            width: 280px;
+            &_item {
+               display: flex;
+               cursor: pointer;
+               align-items: center;
+               padding: 3px 13px;
+               border: 1px solid var(--border-color);
+               box-sizing: border-box;
+               box-shadow: 0px 2px 0px rgba(0, 0, 0, 0.016);
+               width: 100%;
+               min-height: 32px;
+            }
+         }
+         &-save {
+            font-weight: normal;
+            font-size: 14px;
+            line-height: 22px;
+            color: #595959;
+            margin-left: 8px;
+         }
+         &-title {
+            font-weight: normal;
+            font-size: 14px;
+            line-height: 22px;
+            color: #595959;
+         }
+      }
+
+      &__submit-btn {
+         background-color: #1890ff;
+         &:hover {
+            background-color: #40a9ff !important;
+         }
+      }
+   }
+}
+.auth-alt_item_text {
+   padding-left: 30px;
+}
+.auth-alt_item_icon {
+   min-width: 13px;
+   min-height: 16px;
+   padding-top: 5px;
+}
+
+.input-req {
+   border-radius: 2px !important;
+}
+
+.root-dark-mode {
+   .wrap-login__block-auth {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+
+   }
+}

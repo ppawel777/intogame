@@ -1,0 +1,12 @@
+.pseudoMenuItem {
+   cursor: default !important;
+
+   &__darkMode {
+      color: #fff !important;
+   }
+}
+
+.pseudoMenuItem:global(.ant-menu-item-selected) {
+   background-color: rgba(0, 0, 0, 0.06) !important;
+   color: inherit !important
+}
