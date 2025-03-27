@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react-swc'
 import path from 'path'
 import { defineConfig } from 'vite'
 import eslint from 'vite-plugin-eslint'
+import mkcert from 'vite-plugin-mkcert'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -39,5 +40,5 @@ export default defineConfig({
          '@typesDir': path.resolve(__dirname, './src/types'),
       },
    },
-   plugins: [react(), eslint(), ViteRequireContext()],
+   plugins: [react(), eslint(), ViteRequireContext(), mkcert()],
 })
