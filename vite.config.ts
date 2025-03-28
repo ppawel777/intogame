@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react-swc'
 import path from 'path'
 import { defineConfig } from 'vite'
 import eslint from 'vite-plugin-eslint'
+import mkcert from 'vite-plugin-mkcert'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -37,7 +38,8 @@ export default defineConfig({
          '@utils': path.resolve(__dirname, './src/utils'),
          '@hooks': path.resolve(__dirname, './src/hooks'),
          '@typesDir': path.resolve(__dirname, './src/types'),
+         '@supabaseDir': path.resolve(__dirname, './src/supabase'),
       },
    },
-   plugins: [react(), eslint(), ViteRequireContext()],
+   plugins: [react(), eslint(), ViteRequireContext(), mkcert()],
 })

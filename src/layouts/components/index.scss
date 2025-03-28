@@ -87,39 +87,6 @@
   overflow: auto;
 }
 
-.ant-menu-inline-collapsed {
-  width: 48px;
-
-  .ant-menu-item {
-    padding: 0;
-    text-align: center;
-  }
-
-  .ant-menu-submenu {
-    .ant-menu-submenu-title {
-      padding: 0;
-      text-align: center;
-    }
-  }
-}
-
-.ant-menu-vertical-collapsed {
-  .ant-menu-submenu-title {
-    width: 300px;
-    overflow: visible;
-  }
-}
-
-.ant-menu-submenu-popup .ant-menu-vertical > .ant-menu-submenu > .ant-menu-submenu-title {
-  overflow: visible;
-  width: auto;
-}
-
-.ant-menu-sub {
-  max-height: 450px !important;
-  overflow-y: auto !important;
-}
-
 /// HEADER
 .wrap-header {
   padding: 0;
@@ -178,64 +145,4 @@
   padding: 16px;
   overflow: hidden;
   height: calc(100vh - 48px);
-}
-
-.ant-modal-body {
-  font-family: var(--primary-font);
-  font-size: 14px;
-}
-
-.confirm-icon-color { color: #faad14 !important; }
-
-.border-left { border-left: 1px solid var(--border-color); }
-
-.wrap {
-  &-work {
-    &__space {
-      &-container { position: relative; }
-
-      &-editor {
-        overflow: hidden;
-        height: calc(100vh - 200px);
-      }
-
-      &-log { height: 100%; }
-    }
-  }
-
-  &-editor {
-    &__tabs {
-      margin: 0;
-
-      .ant-tabs-nav {
-        margin: 0;
-        padding-right: 1px;
-      }
-
-      .ant-tabs-nav-more { background: white !important; }
-
-      .ant-tabs-tab {
-        &:first-child {
-          border-left: 0 !important;
-        }
-
-        padding: 5px 16px !important;
-        border-bottom: 0;
-      }
-
-      .ant-tabs-nav-operations {
-        button {
-          padding: 8px 14px;
-        }
-      }
-    }
-  }
-}
-
-.root-dark-mode {
-  .wrap-header,
-  .wrap-sidebar {
-    box-shadow: 1px 0 8px 0 rgba(0, 0, 0, 0.4);
-
-  }
 }

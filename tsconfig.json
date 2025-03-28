@@ -33,6 +33,7 @@
          "@utils/*": ["utils/*"],
          "@hooks/*": ["hooks/*"],
          "@typesDir/*": ["types/*"],
+         "@supabaseDir/*": ["supabase/*"],
       }
    },
    "include": ["src/**/*"],
