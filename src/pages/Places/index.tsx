@@ -1,7 +1,5 @@
 import PlacesList from './components/List'
 
-const Places = () => {
-   return <PlacesList />
-}
+const Places = () => <PlacesList />
 
 export default Places

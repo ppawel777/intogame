@@ -10,6 +10,7 @@
       justify-content: center;
       padding-bottom: 30px;
       &__block {
+         min-width: 30%;
          &-header {
             display: flex;
             align-content: center;
@@ -33,6 +34,7 @@
             background: var(--base-background);
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
             border-radius: 2px;
+            
             p {
                color: #8c8c8c;
                font-size: 14px;
@@ -79,31 +81,5 @@
             color: #595959;
          }
       }
-
-      &__submit-btn {
-         background-color: #1890ff;
-         &:hover {
-            background-color: #40a9ff !important;
-         }
-      }
-   }
-}
-.auth-alt_item_text {
-   padding-left: 30px;
-}
-.auth-alt_item_icon {
-   min-width: 13px;
-   min-height: 16px;
-   padding-top: 5px;
-}
-
-.input-req {
-   border-radius: 2px !important;
-}
-
-.root-dark-mode {
-   .wrap-login__block-auth {
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-
    }
 }

@@ -1,8 +1,9 @@
+import { checkAvailableCookies } from '@utils/auth'
 import { Navigate } from 'react-router-dom'
 
 const LoginRoute = ({ children }: any) => {
-   const is_JWTToken_cookies = true
-   if (is_JWTToken_cookies) {
+   const isJWTCookiesAuth = checkAvailableCookies()
+   if (isJWTCookiesAuth) {
       return <Navigate to="/" replace />
    }
 

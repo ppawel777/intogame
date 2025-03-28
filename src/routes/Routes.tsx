@@ -29,7 +29,7 @@ const RoutesComponent = () => {
                }
             >
                <Route path="/places/" element={<Places />} />
-               <Route path="places/:initId/" element={<Place />} />
+               <Route path="/places/:initId/" element={<Place />} />
                <Route path="/profile/" element={<Profile />} />
                <Route path="/help/" element={<Help />} />
                <Route path="/games/*" element={<GamesRoutes />} />
