@@ -1,6 +1,5 @@
 import { Form, Modal, message } from 'antd'
 import FormComponent from './FormComponent'
-import dayjs from 'dayjs'
 import { supabase } from '@supabaseDir/supabaseClient'
 
 type Props = {
@@ -29,10 +28,6 @@ const ModalCreateGame = ({ handleChangeVisibleModal, setChangeGame }: Props) => 
       form
          .validateFields()
          .then((values) => {
-            values.game_date = dayjs(values.game_date).format('YYYY-MM-DD')
-            const time_arr = values.game_time.map((item: any) => dayjs(item).format('HH:mm'))
-            values.game_time = time_arr.join(' - ')
-            // console.log('values', values)
             addGameFetch(values)
          })
          .catch((errorList) => {
@@ -40,6 +35,14 @@ const ModalCreateGame = ({ handleChangeVisibleModal, setChangeGame }: Props) => 
                message.error({ content: item.name[0] + ': ' + item.errors[0], duration: 6 })
             })
          })
+   }
+
+   const initialValues = {
+      place_id: null,
+      game_date: null,
+      game_time: null,
+      game_price: null,
+      players_limit: null,
    }
 
    return (
@@ -54,9 +57,8 @@ const ModalCreateGame = ({ handleChangeVisibleModal, setChangeGame }: Props) => 
          cancelText="Закрыть"
          width="80vw"
          style={{ top: 20 }}
-         className="modal-box-custom_with-footer"
       >
-         <FormComponent form={form} />
+         <FormComponent form={form} initialValues={initialValues} isCreate={true} />
       </Modal>
    )
 }

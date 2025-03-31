@@ -1,16 +1,17 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { supabase } from '@supabaseDir/supabaseClient'
 import { DatePicker, Form, FormProps, InputNumber, Select, TimePicker, message } from 'antd'
 import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
+import { formatDate, formatTime } from '../GamesHelper'
 
 type Props = {
    form: any
+   initialValues: any
+   isCreate?: boolean
 }
 
-const formatTime = 'HH:mm'
-const formatDate = 'YYYY-MM-DD'
-
-const FormComponent = ({ form }: Props) => {
+const FormComponent = ({ form, initialValues, isCreate = false }: Props) => {
    const [placeList, setPlaceList] = useState<any[]>([])
    const [loading, setLoading] = useState(false)
 
@@ -44,7 +45,7 @@ const FormComponent = ({ form }: Props) => {
    }
 
    return (
-      <Form {...layout} form={form} name="create_game">
+      <Form {...layout} form={form} name="create_game" initialValues={initialValues}>
          <Form.Item name="place_id" label="Площадка">
             <Select options={placeList} loading={loading} />
          </Form.Item>
@@ -67,6 +68,16 @@ const FormComponent = ({ form }: Props) => {
          <Form.Item name="players_limit" label="Допустимое число игроков">
             <InputNumber />
          </Form.Item>
+         {!isCreate && (
+            <Form.Item name="is_active" label="Статус игры">
+               <Select
+                  options={[
+                     { label: 'Активна', value: true },
+                     { label: 'Закрыта', value: false },
+                  ]}
+               />
+            </Form.Item>
+         )}
       </Form>
    )
 }
