@@ -10,7 +10,7 @@ type Props = {
    handleChangeVisibleModal: (visible: boolean, id: number) => void
 }
 
-const ModalUsersInfo = ({ id, handleChangeVisibleModal }: Props) => {
+const DrawerUsersInfo = ({ id, handleChangeVisibleModal }: Props) => {
    const [loading, setLoading] = useState(true)
    const [usersList, setUsersList] = useState<any[]>([])
 
@@ -61,7 +61,7 @@ const ModalUsersInfo = ({ id, handleChangeVisibleModal }: Props) => {
                      <IconText icon={LikeOutlined} text="156" key="list-vertical-like-o" />,
                      <IconText icon={MessageOutlined} text="2" key="list-vertical-message" />,
                   ]}
-                  extra={<Button>Написать</Button>}
+                  extra={<Button>Связаться</Button>}
                >
                   <List.Item.Meta
                      avatar={
@@ -73,9 +73,8 @@ const ModalUsersInfo = ({ id, handleChangeVisibleModal }: Props) => {
                </List.Item>
             )}
          />
-         {/* {usersList.length ? usersList.map((item) => <div key={item.id}>{item.user_name}</div>) : null} */}
       </Drawer>
    )
 }
 
-export default ModalUsersInfo
+export default DrawerUsersInfo

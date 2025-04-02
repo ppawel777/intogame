@@ -1,53 +1,49 @@
 import { Flex, Menu, MenuProps } from 'antd'
-import { memo, useState } from 'react'
+import { memo, useEffect, useState } from 'react'
 
 import { CarryOutOutlined, NumberOutlined, PlayCircleOutlined, QuestionCircleOutlined } from '@ant-design/icons'
-import { Link } from 'react-router-dom'
+// import { Link } from 'react-router-dom'
+import AvatarProfile from './AvatarProfile'
 
 import s from './index.module.scss'
-import AvatarProfile from './AvatarProfile'
+import { useNavigate } from 'react-router-dom'
 
 type MenuItem = Required<MenuProps>['items'][number]
 
 const items: MenuItem[] = [
    {
-      label: <Link to={'places'}>Площадки</Link>,
+      // label: <Link to={'places'}>Площадки</Link>,
+      label: 'Площадки',
       key: 'places',
       icon: <NumberOutlined />,
    },
-   // {
-   //    label: 'Мои игры',
-   //    key: 'subMenu',
-   //    icon: <PlayCircleOutlined />,
-   //    children: [
-   //       { label: <Link to={'games/reserved'}>Записаться</Link>, key: 'reserved_game', icon: <EditOutlined /> },
-   //       { label: <Link to={'games/archive'}>Архив игр</Link>, key: 'archive_games', icon: <CarryOutOutlined /> },
-   //    ],
-   // },
    {
-      label: <Link to={'games/reserved'}>В игру</Link>,
-      key: 'reserved_game',
+      // label: <Link to={'games/reserved'}>В игру</Link>,
+      label: 'В игру',
+      key: 'games/reserved',
       icon: <PlayCircleOutlined />,
    },
    {
-      label: <Link to={'games/archive'}>Архив игр</Link>,
-      key: 'archive_games',
+      // label: <Link to={'games/archive'}>Архив игр</Link>,
+      label: 'Архив игр',
+      key: 'games/archive',
       icon: <CarryOutOutlined />,
    },
-   // {
-   //    label: <Link to={'profile'}>Мой профиль</Link>,
-   //    key: 'profile',
-   //    icon: <UserOutlined />,
-   // },
    {
-      label: <Link to={'help'}>Помощь</Link>,
+      // label: <Link to={'help'}>Помощь</Link>,
+      label: 'Помощь',
       key: 'help',
       icon: <QuestionCircleOutlined />,
    },
 ]
 
 const NaviateTop = () => {
-   const [current, setCurrent] = useState('places')
+   const navigate = useNavigate()
+   const [current, setCurrent] = useState('games/reserved')
+
+   useEffect(() => {
+      navigate(current)
+   }, [current])
 
    const onClick: MenuProps['onClick'] = (e) => setCurrent(e.key)
 

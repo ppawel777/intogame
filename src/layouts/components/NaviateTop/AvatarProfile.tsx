@@ -1,13 +1,12 @@
 import { Avatar, Dropdown, MenuProps, message } from 'antd'
-
 import { LoadingOutlined, UserOutlined } from '@ant-design/icons'
-
-import s from './index.module.scss'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@context/providers/AuthProvider/AuthProvider'
 import { delete_cookie, get_cookie } from '@utils/auth'
 import { useEffect, useState } from 'react'
 import { supabase } from '@supabaseDir/supabaseClient'
+
+import s from './index.module.scss'
 
 type User = {
    id: number
@@ -22,21 +21,21 @@ const AvatarProfile = () => {
 
    const user_id = get_cookie('user_id')
 
-   useEffect(() => {
-      const getUser = async () => {
-         setLoading(true)
-         try {
-            const { data, error } = await supabase.from('users').select('*').eq('uuid', user_id)
-            if (error) throw error
-            setUser({ user_name: data[0].user_name, id: data[0].id })
-         } catch (error: any) {
-            message.error(error.message)
-         } finally {
-            setLoading(false)
-         }
+   const getUser = async () => {
+      setLoading(true)
+      try {
+         const { data, error } = await supabase.from('users').select('*').eq('uuid', user_id).single()
+         if (error) throw error
+         setUser({ user_name: data.user_name, id: data.id })
+      } catch (error: any) {
+         message.error(error.message)
+      } finally {
+         setLoading(false)
       }
+   }
 
-      getUser()
+   useEffect(() => {
+      user.id === 0 && getUser()
    }, [user_id])
 
    const handleSignOut = () => {
