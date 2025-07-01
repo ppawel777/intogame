@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { Avatar, Button, Drawer, List, Modal, Space, message } from 'antd'
-import { supabase } from '@supabaseDir/supabaseClient'
+import { Avatar, Button, Drawer, List, Space, message } from 'antd'
 import { useEffect, useState } from 'react'
 import { LikeOutlined, MessageOutlined, StarOutlined, UserOutlined } from '@ant-design/icons'
 import React from 'react'
+import { useSelectUserFromGames } from '@hooks/users/useUserQuery'
 
 type Props = {
    id: number
@@ -17,10 +16,9 @@ const DrawerUsersInfo = ({ id, handleChangeVisibleModal }: Props) => {
    const getUsers = async () => {
       setLoading(true)
       try {
-         const { data, error } = await supabase.from('view_users_from_game').select('*').eq('game_id', id)
-         console.log('data', data)
+         const { data, error } = await useSelectUserFromGames(id)
          if (error) throw error
-         data.length && setUsersList(data)
+         data && data.length && setUsersList(data)
       } catch (error: any) {
          message.error(error.message)
       } finally {
@@ -42,7 +40,6 @@ const DrawerUsersInfo = ({ id, handleChangeVisibleModal }: Props) => {
    return (
       <Drawer
          closable
-         destroyOnClose
          title={<p>Список игроков</p>}
          placement="right"
          open

@@ -1,6 +1,6 @@
 import { Form, Modal, message } from 'antd'
 import FormComponent from './FormComponent'
-import { supabase } from '@supabaseDir/supabaseClient'
+import { useInsertGame } from '@hooks/games/useSupabaseGames'
 
 type Props = {
    handleChangeVisibleModal: (visible: boolean) => void
@@ -12,7 +12,7 @@ const ModalCreateGame = ({ handleChangeVisibleModal, setChangeGame }: Props) => 
 
    const addGameFetch = async (values: any) => {
       try {
-         const { data, error } = await supabase.from('games').insert([values]).select() // возвращает вставленные данные
+         const { data, error } = await useInsertGame(values)
 
          if (error) throw error
          data && message.success('Игра добавлена')
@@ -49,7 +49,6 @@ const ModalCreateGame = ({ handleChangeVisibleModal, setChangeGame }: Props) => 
       <Modal
          title="Создать игру"
          open
-         destroyOnClose
          maskClosable={false}
          onOk={addGameFunction}
          okText="Создать"

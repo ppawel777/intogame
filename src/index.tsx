@@ -1,5 +1,6 @@
 import ReactDOM from 'react-dom/client'
 import { HashRouter } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 // import { StoreProvider } from '@context/providers/StoreProvider'
 // import { applyMiddleware, compose, createStore } from 'redux'
 // import { rootReducer } from './store/reducers'
@@ -14,11 +15,23 @@ import './layouts/main.scss'
 // const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose
 // const store = createStore(rootReducer, composeEnhancers(applyMiddleware(thunk)))
 
+const queryClient = new QueryClient({
+   defaultOptions: {
+      queries: {
+         staleTime: 1000 * 60 * 5, // 5 минут
+         retry: false,
+         refetchOnWindowFocus: false,
+      },
+   },
+})
+
 const ViGruApp = (
    // <StoreProvider>
-   <HashRouter>
-      <App />
-   </HashRouter>
+   <QueryClientProvider client={queryClient}>
+      <HashRouter>
+         <App />
+      </HashRouter>
+   </QueryClientProvider>
    // </StoreProvider>
 )
 

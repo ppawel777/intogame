@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { Button, Form, FormProps, Input, InputNumber, message } from 'antd'
-import { supabase } from '@supabaseDir/supabaseClient'
 // import HCaptcha from '@hcaptcha/react-hcaptcha'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@context/providers/AuthProvider/AuthProvider'
-import { set_cookie } from '@utils/auth'
 import { Session } from '@supabase/supabase-js'
+import { useSignInWithPassword, useSignUp } from '@hooks/auth/useSupabaseAuth'
+import { SessionAuth } from '@typesDir/userTypes'
 
 import './index.scss'
+import { useInsertUser } from '@hooks/users/useUserQuery'
 
 const Login = () => {
    const navigate = useNavigate()
@@ -22,58 +23,35 @@ const Login = () => {
 
    const handleSignIn = (session: Session, id: any) => {
       const { access_token, refresh_token } = session
-
-      signin(() => {
-         set_cookie({ name: 'access_token', value: access_token })
-         set_cookie({ name: 'refresh_token', value: refresh_token })
-         set_cookie({ name: 'user_id', value: id })
-         navigate(from, {
-            replace: true,
-         })
+      const dataSet: SessionAuth = {
+         access_token,
+         refresh_token,
+         user_id: id,
+      }
+      signin(dataSet, () => {
+         navigate(from, { replace: true })
       })
    }
 
    const handleAuth = async (values: any) => {
+      const { email, password, user_name, phone } = values
       setLoading(true)
       try {
          if (isRegistering) {
-            // const { data, error } = await supabase.rpc('register_user', {
-            //    email: values.email,
-            //    password: values.password,
-            //    user_data: {
-            //       user_name: values.user_name,
-            //       phone: values.phone,
-            //    },
-            // })
-            const { data: authData, error } = await supabase.auth.signUp({
-               email: values.email,
-               password: values.password,
-               options: {
-                  data: {
-                     user_name: values.user_name,
-                     user_phone: values.phone,
-                  },
-               },
-            })
+            const { data: authData, error } = await useSignUp(email, password, user_name, phone)
 
             if (error) throw error
-            const { error: publicError } = await supabase.from('users').insert({
-               uuid: authData.user?.id,
-               email: values.email,
-               user_name: values.user_name,
-               user_phone: values.phone,
-            })
+
+            const { session, user } = authData
+            const { error: publicError } = await useInsertUser(user?.id, email, user_name, phone)
 
             if (publicError) throw publicError
-            console.log('authData', authData)
-            authData.session && handleSignIn(authData.session, authData.user?.id)
+
+            session && handleSignIn(session, user?.id)
          } else {
-            const { data, error } = await supabase.auth.signInWithPassword({
-               email: values.email,
-               password: values.password,
-            })
+            const { data, error } = await useSignInWithPassword(email, password)
             if (error) throw error
-            console.log('data', data)
+
             data.session && handleSignIn(data.session, data.user?.id)
          }
       } catch (err: any) {
@@ -93,6 +71,7 @@ const Login = () => {
       }
       handleAuth(resultValues)
    }
+
    const layout: FormProps = {
       colon: false,
       labelAlign: 'left',
@@ -103,11 +82,6 @@ const Login = () => {
          span: 14,
       },
    }
-
-   // const handleVerificationSuccess = (token, ekey) => {
-   //    console.log('token', token)
-   //    console.log('ekey', ekey)
-   // }
 
    return (
       <div className="wrap-login">

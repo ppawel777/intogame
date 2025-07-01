@@ -32,10 +32,24 @@ export const deleteAuth = () => {
    location.reload()
 }
 
+// Проверяет истечение срока JWT
+const isJwtExpired = (token: string): boolean => {
+   try {
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      const exp = payload.exp * 1000
+      return Date.now() > exp
+   } catch {
+      return true
+   }
+}
+
 // Проверка налачия cookies авторизации, установленных в браузере
 export const checkAvailableCookies = () => {
-   const isRefreshToken = get_cookie('refresh_token')
-   const isAccessToken = get_cookie('access_token')
+   const refreshToken = get_cookie('refresh_token')
+   const accessToken = get_cookie('access_token')
 
-   return isRefreshToken === null && isAccessToken === null ? false : true
+   if (!refreshToken || !accessToken) return false
+
+   // Проверка истечения срока токена
+   return !isJwtExpired(accessToken)
 }

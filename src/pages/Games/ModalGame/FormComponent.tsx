@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { supabase } from '@supabaseDir/supabaseClient'
+import { useEffect, useState } from 'react'
 import { DatePicker, Form, FormProps, InputNumber, Select, TimePicker, message } from 'antd'
 import dayjs from 'dayjs'
-import { useEffect, useState } from 'react'
 import { formatDate, formatTime } from '../GamesHelper'
+import { useSelectAllPlaces } from '@hooks/places/useSupabasePlaces'
 
 type Props = {
    form: any
@@ -19,8 +18,12 @@ const FormComponent = ({ form, initialValues, isCreate = false }: Props) => {
       const getPlaces = async () => {
          setLoading(true)
          try {
-            const { data, error } = await supabase.from('places').select('*').eq('is_active', true)
+            const { data, error } = await useSelectAllPlaces()
+
             if (error) throw error
+
+            if (!data) return
+
             const result = data.map((item) => ({ value: item.id, label: item.name }))
             data.length && setPlaceList(result)
          } catch (error: any) {

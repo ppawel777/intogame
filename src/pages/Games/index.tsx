@@ -1,18 +1,30 @@
 import { Badge, Button, Card, Descriptions, Empty, Flex, Popconfirm, Skeleton, Space, message } from 'antd'
 import { FormOutlined, PlusOutlined, QuestionCircleOutlined } from '@ant-design/icons'
 import { useEffect, useState } from 'react'
+import { useAuth } from '@context/providers/AuthProvider/AuthProvider'
 import ModalCreateGame from './ModalGame/ModalCreateGame'
 import ModalEditGame from './ModalGame/ModalEditGame'
-import { supabase } from '@supabaseDir/supabaseClient'
 import dayjs from 'dayjs'
 import { formatDate, formatTime } from './GamesHelper'
 import DrawerUsersInfo from './ModalGame/DrawerUsersInfo'
-import { get_cookie } from '@utils/auth'
+import { useCustomQuery } from '@hooks/useCustomQuery'
+import { useDeleteVotes, useInsertVotes, useSelectGames, useSelectVotes } from '@hooks/games/useSupabaseGames'
 
 import s from './index.module.scss'
 
 type Props = {
    isArchive?: boolean
+}
+
+const fetchVotes = async (user_id: number) => {
+   try {
+      const { data, error } = await useSelectVotes(user_id)
+      if (error) throw error
+      return data
+   } catch (error: any) {
+      message.error(error.message)
+      return null
+   }
 }
 
 const Games = ({ isArchive = false }: Props) => {
@@ -23,51 +35,27 @@ const Games = ({ isArchive = false }: Props) => {
    const [loading, setLoading] = useState(true)
    const [gamesData, setGamesData] = useState<any[]>([])
    const [openConfirm, setOpenConfirm] = useState(false)
-   const [userId, setUserId] = useState<number | null>(null)
-   const [votes, setVotes] = useState(null)
 
-   useEffect(() => {
-      const getUser = async () => {
-         setLoading(true)
-         const user_id = get_cookie('user_id')
-         try {
-            const { data, error } = await supabase.from('users').select('*').eq('uuid', user_id).single()
-            if (error) throw error
-            setUserId(data.id)
-         } catch (error: any) {
-            message.error(error.message)
-         } finally {
-            setLoading(false)
-         }
-      }
+   const { userData } = useAuth()
 
-      getUser()
-   }, [])
-
-   useEffect(() => {
-      if (!userId) return
-      const getVote = async () => {
-         setLoading(true)
-         try {
-            const { data, error } = await supabase.from('votes').select('*').eq('user_id', userId).single()
-            if (error) throw error
-            setVotes(data)
-         } catch (error: any) {
-            message.error(error.message)
-         } finally {
-            setLoading(false)
-         }
-      }
-
-      getVote()
-   }, [userId])
+   const {
+      data: votes,
+      isLoading: loadingVotes,
+      refetch: refetchVotes,
+      isError,
+      error,
+   } = useCustomQuery({
+      queryKey: ['votes', userData?.id],
+      queryFn: () => userData && fetchVotes(userData.id),
+      enabled: !!userData?.id,
+   })
 
    const getGames = async () => {
       setLoading(true)
       try {
-         const { data, error } = await supabase.from('view_games').select('*').eq('is_active', !isArchive)
+         const { data, error } = await useSelectGames(isArchive)
          if (error) throw error
-         data.length && setGamesData(data)
+         data && setGamesData(data)
       } catch (error: any) {
          message.error(error.message)
       } finally {
@@ -80,10 +68,10 @@ const Games = ({ isArchive = false }: Props) => {
       try {
          const values = {
             game_id,
-            user_id: userId,
+            user_id: userData?.id,
          }
-         const { error: errorVotes } = await supabase.from('votes').insert(values)
-         if (errorVotes) throw errorVotes
+         const { error } = await useInsertVotes(values)
+         if (error) throw error
          setChangeGame(true)
       } catch (error: any) {
          message.error(error.message)
@@ -95,8 +83,8 @@ const Games = ({ isArchive = false }: Props) => {
    const deleteVotes = async (game_id: number) => {
       setLoading(true)
       try {
-         const { error: errorVotes } = await supabase.from('votes').delete().eq('game_id', game_id).eq('user_id', userId)
-         if (errorVotes) throw errorVotes
+         const { error } = await useDeleteVotes(game_id, userData?.id as number)
+         if (error) throw error
          setChangeGame(true)
       } catch (error: any) {
          message.error(error.message)
@@ -112,9 +100,10 @@ const Games = ({ isArchive = false }: Props) => {
    useEffect(() => {
       if (isChangeGame) {
          getGames()
+         refetchVotes()
          setChangeGame(false)
       }
-   }, [isChangeGame])
+   }, [isChangeGame, refetchVotes])
 
    const handleChangeVisibleModalCreate = (visible: boolean) => setVisibleModalCreate(visible)
    const handleChangeVisibleModalEdit = (visible: boolean, id: number) => setVisibleModalEdit({ visible, id })
@@ -143,7 +132,6 @@ const Games = ({ isArchive = false }: Props) => {
                   <FormOutlined className={s.editGameBtn} onClick={() => handleChangeVisibleModalEdit(true, id)} />
                </>
             ) : (
-               // <div>ddd</div>
                <Badge status="default" text={<span className={s.extraClose}>Игра закрыта</span>} />
             )}
          </>
@@ -249,6 +237,19 @@ const Games = ({ isArchive = false }: Props) => {
                Записаться
             </Button>
          </Popconfirm>
+      )
+   }
+
+   if (loading || loadingVotes) {
+      return <Skeleton active />
+   }
+
+   if (isError) {
+      return (
+         <div style={{ margin: '20px 0' }}>
+            <p>Ошибка загрузки данных: {error.message}</p>
+            <Button onClick={() => refetchVotes()}>Повторить попытку</Button>
+         </div>
       )
    }
 

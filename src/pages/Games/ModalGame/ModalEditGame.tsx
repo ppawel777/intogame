@@ -1,7 +1,7 @@
 import { Form, Modal, message } from 'antd'
 import FormComponent from './FormComponent'
 import dayjs from 'dayjs'
-import { supabase } from '@supabaseDir/supabaseClient'
+import { useUpdatedGame } from '@hooks/games/useSupabaseGames'
 
 type Props = {
    gamesData: any[]
@@ -16,7 +16,7 @@ const ModalEditGame = ({ gamesData, id, handleChangeVisibleModal, setChangeGame 
    const currentGameData = gamesData.find((f) => f.id === id)
    const editGameFetch = async (values: any) => {
       try {
-         const { data, error } = await supabase.from('games').update(values).eq('id', id).select() // Возвращает обновленные данные
+         const { data, error } = await useUpdatedGame(values, id)
 
          if (error) throw error
          data && message.success('Игра обновлена')
@@ -56,7 +56,6 @@ const ModalEditGame = ({ gamesData, id, handleChangeVisibleModal, setChangeGame 
       <Modal
          title="Редактировать игру"
          open
-         destroyOnClose
          maskClosable={false}
          onOk={editGameFunction}
          okText="Сохранить"

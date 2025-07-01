@@ -1,15 +1,15 @@
-import { checkAvailableCookies } from '@utils/auth'
 import { Navigate, useLocation } from 'react-router-dom'
+import { useAuth } from '@context/providers/AuthProvider/AuthProvider'
 
-const PrivateRoute = ({ children }: any) => {
+const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
    const location = useLocation()
+   const { isAuthenticated } = useAuth()
 
-   const isJWTCookiesAuth = checkAvailableCookies()
-
-   if (!isJWTCookiesAuth) {
+   if (!isAuthenticated) {
       return <Navigate to="/login" state={{ from: location.pathname }} replace />
    }
-   return children
+
+   return <>{children}</>
 }
 
 export default PrivateRoute

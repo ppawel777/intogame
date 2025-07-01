@@ -2,7 +2,7 @@ import { LikeOutlined, MessageOutlined, StarOutlined } from '@ant-design/icons'
 import { Input, List, Skeleton, Space, message } from 'antd'
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { supabase } from '@supabaseDir/supabaseClient'
+import { useSelectAllPlaces } from '@hooks/places/useSupabasePlaces'
 
 import s from './index.module.scss'
 
@@ -21,9 +21,9 @@ const PlacesList = () => {
       const getPlaces = async () => {
          setLoading(true)
          try {
-            const { data, error } = await supabase.from('places').select('*').eq('is_active', true)
+            const { data, error } = await useSelectAllPlaces()
             if (error) throw error
-            data.length && setPlacesData(data)
+            data && data.length && setPlacesData(data)
          } catch (error: any) {
             message.error(error.message)
          } finally {
