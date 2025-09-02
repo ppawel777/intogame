@@ -6,23 +6,24 @@ import NaviateTop from './components/NaviateTop/NaviateTop'
 
 import './main.scss'
 
-const { Content } = Layout
+const { Content, Footer } = Layout
 
 const MainLayout = () => {
    // const location = useLocation()
 
    return (
       <Layout className="wrap-container">
-         {/* <Sidebar /> */}
-         <Layout>
-            {/* {location.pathname !== '/' && <HeaderComponent />} */}
-            <NaviateTop />
-            <Content className="wrap-main">
-               <ErrorBoundary>
-                  <Outlet />
-               </ErrorBoundary>
-            </Content>
-         </Layout>
+         {/* {location.pathname !== '/' && <HeaderComponent />} */}
+         <NaviateTop />
+         <Content className="wrap-main">
+            <ErrorBoundary>
+               <Outlet />
+            </ErrorBoundary>
+         </Content>
+         <Footer className="wrap-footer">
+            <div>© 2025 В игру. Все права защищены.</div>
+            <div>ИНН 027003391848, ОГРНИП 317028000139848</div>
+         </Footer>
       </Layout>
    )
 }

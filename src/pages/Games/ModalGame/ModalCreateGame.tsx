@@ -1,39 +1,50 @@
 import { Form, Modal, message } from 'antd'
 import FormComponent from './FormComponent'
 import { supabase } from '@supabaseDir/supabaseClient'
+import { useState } from 'react'
+import { GameFormValuesType } from '@typesDir/gameTypes'
 
 type Props = {
-   handleChangeVisibleModal: (visible: boolean) => void
-   setChangeGame: React.Dispatch<React.SetStateAction<boolean>>
+   onClose: () => void
+   onSuccess?: () => void
 }
 
-const ModalCreateGame = ({ handleChangeVisibleModal, setChangeGame }: Props) => {
+const ModalCreateGame = ({ onClose, onSuccess }: Props) => {
    const [form] = Form.useForm()
+   const [loading, setLoading] = useState(false)
 
-   const addGameFetch = async (values: any) => {
+   const handleCreate = async (values: GameFormValuesType) => {
+      setLoading(true)
       try {
-         const { data, error } = await supabase.from('games').insert([values]).select() // возвращает вставленные данные
+         const { error } = await supabase.from('games').insert([values])
 
          if (error) throw error
-         data && message.success('Игра добавлена')
-         setChangeGame(true)
-         handleChangeVisibleModal(false)
+
+         message.success('Игра успешно создана')
+         form.resetFields()
+         onSuccess?.()
+         onClose()
       } catch (error: any) {
-         message.error(error.message)
+         console.error('Ошибка создания игры:', error)
+         message.error(error.message || 'Не удалось создать игру')
+      } finally {
+         setLoading(false)
       }
    }
 
-   const addGameFunction = () => {
-      form.submit()
+   const handleSubmit = () => {
       form
          .validateFields()
-         .then((values) => {
-            addGameFetch(values)
-         })
-         .catch((errorList) => {
-            errorList.errorFields.forEach((item: { name: string[]; errors: string[] }) => {
-               message.error({ content: item.name[0] + ': ' + item.errors[0], duration: 6 })
-            })
+         .then(handleCreate)
+         .catch((errorInfo) => {
+            // Показываем первую ошибку
+            const firstError = errorInfo.errorFields[0]
+            if (firstError) {
+               message.error({
+                  content: `${firstError.name.join('.')}: ${firstError.errors[0]}`,
+                  duration: 6,
+               })
+            }
          })
    }
 
@@ -49,14 +60,15 @@ const ModalCreateGame = ({ handleChangeVisibleModal, setChangeGame }: Props) => 
       <Modal
          title="Создать игру"
          open
-         destroyOnClose
-         maskClosable={false}
-         onOk={addGameFunction}
+         onOk={handleSubmit}
+         okButtonProps={{ loading }}
+         onCancel={onClose}
          okText="Создать"
-         onCancel={() => handleChangeVisibleModal(false)}
-         cancelText="Закрыть"
+         cancelText="Отмена"
          width="80vw"
          style={{ top: 20 }}
+         // destroyOnClose
+         maskClosable={false}
       >
          <FormComponent form={form} initialValues={initialValues} isCreate={true} />
       </Modal>

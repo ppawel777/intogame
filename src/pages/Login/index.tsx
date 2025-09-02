@@ -20,13 +20,13 @@ const Login = () => {
 
    const from = location.state?.from || '/'
 
-   const handleSignIn = (session: Session, id: any) => {
+   const handleSignIn = (session: Session) => {
       const { access_token, refresh_token } = session
 
       signin(() => {
          set_cookie({ name: 'access_token', value: access_token })
          set_cookie({ name: 'refresh_token', value: refresh_token })
-         set_cookie({ name: 'user_id', value: id })
+         // set_cookie({ name: 'user_id', value: id })
          navigate(from, {
             replace: true,
          })
@@ -65,16 +65,16 @@ const Login = () => {
             })
 
             if (publicError) throw publicError
-            console.log('authData', authData)
-            authData.session && handleSignIn(authData.session, authData.user?.id)
+            // console.log('authData', authData)
+            authData.session && handleSignIn(authData.session)
          } else {
             const { data, error } = await supabase.auth.signInWithPassword({
                email: values.email,
                password: values.password,
             })
             if (error) throw error
-            console.log('data', data)
-            data.session && handleSignIn(data.session, data.user?.id)
+            // console.log('data', data)
+            data.session && handleSignIn(data.session)
          }
       } catch (err: any) {
          if (err.code === 'invalid_credentials') message.error('Неправильные email или пароль')

@@ -2,70 +2,131 @@ import { Form, Modal, message } from 'antd'
 import FormComponent from './FormComponent'
 import dayjs from 'dayjs'
 import { supabase } from '@supabaseDir/supabaseClient'
+import { useEffect, useState } from 'react'
 
-type Props = {
-   gamesData: any[]
-   id: number
-   handleChangeVisibleModal: (visible: boolean, id: number) => void
-   setChangeGame: React.Dispatch<React.SetStateAction<boolean>>
+// Типы
+interface GameFormValues {
+   place_id: number
+   game_date: string
+   game_time: [string, string]
+   game_price: number
+   players_limit: number
+   is_active: boolean
 }
 
-const ModalEditGame = ({ gamesData, id, handleChangeVisibleModal, setChangeGame }: Props) => {
-   const [form] = Form.useForm()
+type Props = {
+   id: number
+   onClose: () => void
+   onSuccess?: () => void
+}
 
-   const currentGameData = gamesData.find((f) => f.id === id)
-   const editGameFetch = async (values: any) => {
+const ModalEditGame = ({ id, onClose, onSuccess }: Props) => {
+   const [form] = Form.useForm()
+   const [loading, setLoading] = useState(false)
+
+   // Получаем данные игры напрямую из БД (лучше, чем передавать gamesData)
+   const [initialValues, setInitialValues] = useState<GameFormValues | null>(null)
+   const [loadingData, setLoadingData] = useState(true)
+
+   useEffect(() => {
+      if (!open || !id) return
+
+      const fetchGame = async () => {
+         setLoadingData(true)
+         try {
+            const { data, error } = await supabase.from('games').select('*').eq('id', id).single()
+
+            if (error) throw error
+
+            const [startTime, endTime] = data.game_time
+
+            setInitialValues({
+               place_id: data.place_id,
+               game_date: data.game_date,
+               game_time: [startTime, endTime],
+               game_price: data.game_price,
+               players_limit: data.players_limit,
+               is_active: data.is_active,
+            })
+
+            // Заполняем форму
+            form.setFieldsValue({
+               place_id: data.place_id,
+               game_date: dayjs(data.game_date),
+               game_time: [dayjs(startTime), dayjs(endTime)],
+               game_price: data.game_price,
+               players_limit: data.players_limit,
+               is_active: data.is_active,
+            })
+         } catch (error: any) {
+            console.error('Ошибка загрузки игры:', error)
+            message.error('Не удалось загрузить данные игры')
+            onClose()
+         } finally {
+            setLoadingData(false)
+         }
+      }
+
+      fetchGame()
+   }, [id, open, form])
+
+   const handleUpdate = async (values: GameFormValues) => {
+      setLoading(true)
       try {
-         const { data, error } = await supabase.from('games').update(values).eq('id', id).select() // Возвращает обновленные данные
+         const { ...updateData } = values
+
+         const { error } = await supabase.from('games').update(updateData).eq('id', id)
 
          if (error) throw error
-         data && message.success('Игра обновлена')
-         setChangeGame(true)
-         handleChangeVisibleModal(false, 0)
+
+         message.success('Игра обновлена')
+         form.resetFields()
+         onSuccess?.()
+         onClose()
       } catch (error: any) {
-         message.error(error.message)
+         console.error('Ошибка обновления игры:', error)
+         message.error(error.message || 'Не удалось обновить игру')
+      } finally {
+         setLoading(false)
       }
    }
 
-   const editGameFunction = () => {
-      form.submit()
+   const handleSubmit = () => {
       form
          .validateFields()
-         .then((values) => {
-            editGameFetch(values)
+         .then(handleUpdate)
+         .catch((errorInfo) => {
+            const firstError = errorInfo.errorFields?.[0]
+            if (firstError) {
+               message.error({
+                  content: `${firstError.name.join('.')}: ${firstError.errors[0]}`,
+                  duration: 6,
+               })
+            }
          })
-         .catch((errorList) => {
-            errorList.errorFields.forEach((item: { name: string[]; errors: string[] }) => {
-               message.error({ content: item.name[0] + ': ' + item.errors[0], duration: 6 })
-            })
-         })
-   }
-
-   const [startTime, endTime] = currentGameData.game_time
-
-   const initialValues = {
-      place_id: currentGameData.place_id,
-      game_date: dayjs(currentGameData.game_date),
-      game_time: [dayjs(startTime), dayjs(endTime)],
-      game_price: currentGameData.game_price,
-      players_limit: currentGameData.players_limit,
-      is_active: currentGameData.is_active,
    }
 
    return (
       <Modal
          title="Редактировать игру"
          open
-         destroyOnClose
-         maskClosable={false}
-         onOk={editGameFunction}
+         // open={open}
+         onOk={handleSubmit}
+         okButtonProps={{ loading }}
+         onCancel={onClose}
          okText="Сохранить"
-         onCancel={() => handleChangeVisibleModal(false, 0)}
-         cancelText="Закрыть"
+         cancelText="Отмена"
          width="80vw"
          style={{ top: 20 }}
+         // destroyOnClose
+         maskClosable={false}
+         confirmLoading={loadingData}
       >
-         <FormComponent form={form} initialValues={initialValues} />
+         {loadingData ? (
+            <div style={{ padding: '48px', textAlign: 'center' }}>Загрузка данных...</div>
+         ) : (
+            <FormComponent form={form} initialValues={initialValues} />
+         )}
       </Modal>
    )
 }
