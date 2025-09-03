@@ -1,40 +1,56 @@
-import { Flex, Menu, MenuProps } from 'antd'
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { memo, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Flex, Menu, MenuProps } from 'antd'
+// import { CarryOutOutlined, NumberOutlined, PlayCircleOutlined, QuestionCircleOutlined } from '@ant-design/icons'
 
-import { CarryOutOutlined, NumberOutlined, PlayCircleOutlined, QuestionCircleOutlined } from '@ant-design/icons'
-// import { Link } from 'react-router-dom'
 import AvatarProfile from './AvatarProfile'
 
-import s from './index.module.scss'
-import { useNavigate } from 'react-router-dom'
+import s from './NaviateTop.module.scss'
 
 type MenuItem = Required<MenuProps>['items'][number]
 
 const items: MenuItem[] = [
+   // {
+   //    label: 'Главная',
+   //    key: '/',
+   //    // icon: <NumberOutlined />,
+   // },
    {
-      // label: <Link to={'places'}>Площадки</Link>,
-      label: 'Площадки',
+      label: 'Игровые площадки',
       key: 'places',
-      icon: <NumberOutlined />,
+      // icon: <NumberOutlined />,
    },
    {
-      // label: <Link to={'games/reserved'}>В игру</Link>,
-      label: 'В игру',
+      label: 'Запись в игру',
       key: 'games/reserved',
-      icon: <PlayCircleOutlined />,
+      // icon: <PlayCircleOutlined />,
    },
    {
-      // label: <Link to={'games/archive'}>Архив игр</Link>,
       label: 'Архив игр',
       key: 'games/archive',
-      icon: <CarryOutOutlined />,
+      // icon: <CarryOutOutlined />,
    },
    {
-      // label: <Link to={'help'}>Помощь</Link>,
-      label: 'Помощь',
-      key: 'help',
-      icon: <QuestionCircleOutlined />,
+      label: 'О сервисе',
+      key: 'service-info',
+      // icon: <QuestionCircleOutlined />,
    },
+   {
+      label: 'Правила и документы',
+      key: 'documents',
+      // icon: <QuestionCircleOutlined />,
+   },
+   {
+      label: 'Контакты',
+      key: 'contacts',
+      // icon: <QuestionCircleOutlined />,
+   },
+   // {
+   //    label: 'Помощь',
+   //    key: 'help',
+   //    // icon: <QuestionCircleOutlined />,
+   // },
 ]
 
 const NaviateTop = () => {

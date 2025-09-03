@@ -10,13 +10,13 @@ import { formatDate, formatTime } from './GamesHelper'
 import DrawerUsersInfo from './ModalGame/DrawerUsersInfo'
 import { GameType, GameVotesType } from '@typesDir/gameTypes'
 
-import s from './index.module.scss'
+import s from './Games.module.scss'
 
 type Props = {
    isArchive?: boolean
 }
 
-const Games = ({ isArchive = false }: Props) => {
+const GamesPage = ({ isArchive = false }: Props) => {
    const [isModalCreateOpen, setIsModalCreateOpen] = useState(false)
    const [modalEdit, setModalEdit] = useState({ open: false, id: 0 })
    const [drawerUsers, setDrawerUsers] = useState({ open: false, id: 0 })
@@ -168,7 +168,7 @@ const Games = ({ isArchive = false }: Props) => {
    const ExtraActions = ({ id }: { id: number }) => (
       <>
          {!isArchive && <FormOutlined className={s.editGameBtn} onClick={() => openEditModal(id)} />}
-         {isArchive && <Badge status="default" text={<span className={s.extraClose}>Игра закрыта</span>} />}
+         {isArchive && <Badge status="default" text={<span className={s.extraClose}>Игра состоялась</span>} />}
       </>
    )
 
@@ -290,7 +290,7 @@ const Games = ({ isArchive = false }: Props) => {
                      title={game.place_name}
                      extra={
                         <Space>
-                           <GameStatus total={game.players_total} limit={game.players_limit} />
+                           {!isArchive && <GameStatus total={game.players_total} limit={game.players_limit} />}
                            {isManager && <ExtraActions id={game.id} />}
                         </Space>
                      }
@@ -311,4 +311,4 @@ const Games = ({ isArchive = false }: Props) => {
    )
 }
 
-export default Games
+export default GamesPage

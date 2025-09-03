@@ -7,12 +7,15 @@ import MainLayout from '../layouts/MainLayout'
 import LoginRoute from './LoginRoute'
 import GamesRoutes from './GameRoutes'
 
-const Login = lazy(() => import('../pages/Login'))
-const Home = lazy(() => import('../pages/Home'))
-const Places = lazy(() => import('../pages/Places'))
-const Place = lazy(() => import('../pages/Places/Place'))
+const LoginPage = lazy(() => import('../pages/Login/LoginPage'))
+const HomePage = lazy(() => import('../pages/Home/HomePage'))
+const PlacesPage = lazy(() => import('../pages/Places/PlacesPage'))
+const PlacePage = lazy(() => import('../pages/Places/Place/PlacePage'))
 const Profile = lazy(() => import('../pages/Profile'))
-const Help = lazy(() => import('../pages/Help'))
+const HelpPage = lazy(() => import('../pages/Help/HelpPage'))
+const ServiceInfoPage = lazy(() => import('../pages/ServiceInfo/ServiceInfoPage'))
+const ContactsPage = lazy(() => import('../pages/Contacts/ContactsPage'))
+const DocumentsPage = lazy(() => import('../pages/Documents/DocumentsPage'))
 const _404 = lazy(() => import('../pages/Error/_404'))
 
 const RoutesComponent = () => {
@@ -28,18 +31,21 @@ const RoutesComponent = () => {
                   </PrivateRoute>
                }
             >
-               <Route path="/places/" element={<Places />} />
-               <Route path="/places/:initId/" element={<Place />} />
+               <Route path="/places/" element={<PlacesPage />} />
+               <Route path="/places/:initId/" element={<PlacePage />} />
                <Route path="/profile/" element={<Profile />} />
-               <Route path="/help/" element={<Help />} />
+               <Route path="/help/" element={<HelpPage />} />
+               <Route path="/service-info/" element={<ServiceInfoPage />} />
+               <Route path="/contacts/" element={<ContactsPage />} />
+               <Route path="/documents/" element={<DocumentsPage />} />
                <Route path="/games/*" element={<GamesRoutes />} />
-               <Route path="/" element={<Home />} />
+               <Route path="/" element={<HomePage />} />
                <Route path="*" element={<_404 />} />
             </Route>
             <Route
                element={
                   <LoginRoute>
-                     <Login />
+                     <LoginPage />
                   </LoginRoute>
                }
             >

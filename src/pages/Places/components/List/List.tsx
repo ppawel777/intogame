@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '@supabaseDir/supabaseClient'
 
-import s from './index.module.scss'
+import s from './List.module.scss'
 
 const IconText = ({ icon, text }: { icon: React.FC; text: string }) => (
    <Space>

@@ -5,18 +5,16 @@ body {
 }
 
 .wrap {
-  // &-container {
-  //   height: 100vh;
-  // }
   &-main {
+    padding: 16px;
     display: flex;
     width: 100%;
     height: calc(100vh - 95px);
-    overflow: hidden;
+    overflow: auto;
+    // overflow: hidden;
   }
   &-footer {
-    padding: 6px;
-    // max-height: 40px;
+    padding: 14px;
     display: flex;
     flex-direction: column;
     align-items: center;

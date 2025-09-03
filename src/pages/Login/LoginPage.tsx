@@ -9,7 +9,7 @@ import { Session } from '@supabase/supabase-js'
 
 import './index.scss'
 
-const Login = () => {
+const LoginPage = () => {
    const navigate = useNavigate()
    const location = useLocation()
    const { signin } = useAuth()
@@ -202,4 +202,4 @@ const Login = () => {
    )
 }
 
-export default Login
+export default LoginPage
