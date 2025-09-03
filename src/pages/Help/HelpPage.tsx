@@ -1,5 +1,5 @@
-const Help = () => {
+const HelpPage = () => {
    return <div className="wrap-index-section">Помощь</div>
 }
 
-export default Help
+export default HelpPage

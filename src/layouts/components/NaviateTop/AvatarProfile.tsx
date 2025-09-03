@@ -6,7 +6,7 @@ import { delete_cookie, get_cookie } from '@utils/auth'
 import { useEffect, useState } from 'react'
 import { supabase } from '@supabaseDir/supabaseClient'
 
-import s from './index.module.scss'
+import s from './NaviateTop.module.scss'
 
 type User = {
    id: number

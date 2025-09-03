@@ -1,12 +1,12 @@
 import { lazy } from 'react'
 import { Route, Routes } from 'react-router-dom'
 
-const Games = lazy(() => import('../pages/Games'))
+const GamesPage = lazy(() => import('../pages/Games/GamesPage'))
 
 const GamesRoutes = () => (
    <Routes>
-      <Route path="reserved/" element={<Games />} />
-      <Route path="archive/" element={<Games isArchive={true} />} />
+      <Route path="reserved/" element={<GamesPage />} />
+      <Route path="archive/" element={<GamesPage isArchive={true} />} />
    </Routes>
 )
 

@@ -22,7 +22,7 @@ const MainLayout = () => {
          </Content>
          <Footer className="wrap-footer">
             <div>© 2025 В игру. Все права защищены.</div>
-            <div>ИНН 027003391848, ОГРНИП 317028000139848</div>
+            {/* <div>ИНН 027003391848, ОГРНИП 317028000139848</div> */}
          </Footer>
       </Layout>
    )

@@ -2,16 +2,16 @@ import { Button, Image } from 'antd'
 import { useNavigate, useParams } from 'react-router-dom'
 import place_example from '@img/place_example.jpg'
 
-import s from './index.module.scss'
+import s from './Place.module.scss'
 
-const Place = () => {
+const PlacePage = () => {
    const params = useParams()
    const navigate = useNavigate()
 
    const { initId } = params || {}
 
    return (
-      <div className={s.wrapPlace}>
+      <div>
          <Button type="primary" onClick={() => navigate(-1)} className={s.buttonBack}>
             Назад
          </Button>
@@ -21,4 +21,4 @@ const Place = () => {
    )
 }
 
-export default Place
+export default PlacePage
