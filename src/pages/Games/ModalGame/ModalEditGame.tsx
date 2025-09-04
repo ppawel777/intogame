@@ -1,5 +1,5 @@
 import { Form, Modal, message } from 'antd'
-import FormComponent from './FormComponent'
+import FormComponent from '../components/FormComponent/FormComponent'
 import dayjs from 'dayjs'
 import { supabase } from '@supabaseDir/supabaseClient'
 import { useEffect, useState } from 'react'

@@ -1,0 +1,10 @@
+.wrapReserved {
+   width: 100%;
+   display: flex;
+   flex-direction: column;
+}
+
+.cardWrap {
+   height: calc(100vh - 140px);
+   overflow: auto;
+}

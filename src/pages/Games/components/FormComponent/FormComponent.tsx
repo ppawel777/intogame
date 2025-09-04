@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+import { useEffect, useState } from 'react'
 import { supabase } from '@supabaseDir/supabaseClient'
 import { DatePicker, Form, FormProps, InputNumber, Select, TimePicker, message } from 'antd'
 import dayjs from 'dayjs'
-import { useEffect, useState } from 'react'
-import { formatDate, formatTime } from '../GamesHelper'
+import { formatDate, formatTime } from '../gameComponentHelpers'
 
 type Props = {
    form: any

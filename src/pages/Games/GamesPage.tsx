@@ -1,16 +1,13 @@
-/* eslint-disable max-len */
-import { Badge, Button, Card, Descriptions, Empty, Flex, Popconfirm, Skeleton, Space, Tooltip, message } from 'antd'
-import { FormOutlined, PlusOutlined, QuestionCircleOutlined } from '@ant-design/icons'
 import { useEffect, useState } from 'react'
+import { Button, Card, Empty, Flex, Skeleton, Space, message } from 'antd'
+import { PlusOutlined } from '@ant-design/icons'
 import ModalCreateGame from './ModalGame/ModalCreateGame'
 import ModalEditGame from './ModalGame/ModalEditGame'
 import { supabase } from '@supabaseDir/supabaseClient'
-import dayjs from 'dayjs'
-import { formatDate, formatTime } from './GamesHelper'
-import DrawerUsersInfo from './ModalGame/DrawerUsersInfo'
-import { GameType, GameVotesType } from '@typesDir/gameTypes'
+import { GameType } from '@typesDir/gameTypes'
+import { ActionButton, GameCardExtra, GameDetails } from './components'
 
-import s from './Games.module.scss'
+import s from './GamesPage.module.scss'
 
 type Props = {
    isArchive?: boolean
@@ -19,14 +16,12 @@ type Props = {
 const GamesPage = ({ isArchive = false }: Props) => {
    const [isModalCreateOpen, setIsModalCreateOpen] = useState(false)
    const [modalEdit, setModalEdit] = useState({ open: false, id: 0 })
-   const [drawerUsers, setDrawerUsers] = useState({ open: false, id: 0 })
+
    const [refetch, setRefetch] = useState(false)
    const [loading, setLoading] = useState(true)
    const [games, setGames] = useState<GameType[]>([])
    const [userId, setUserId] = useState<number | null>(null)
-   const [userVotes, setUserVotes] = useState<GameVotesType[]>([])
-   const [confirmOpen, setConfirmOpen] = useState(false)
-   const [confirmTarget, setConfirmTarget] = useState<number | null>(null)
+   const [userVoteIds, setUserVoteIds] = useState<number[]>([])
    const [isManager, setIsManager] = useState(false)
 
    // Получение пользователя
@@ -71,7 +66,8 @@ const GamesPage = ({ isArchive = false }: Props) => {
 
             if (error) throw error
 
-            setUserVotes(data)
+            const voteIds = data.map((item) => item.game_id)
+            setUserVoteIds(voteIds)
          } catch (error: any) {
             message.error('Ошибка загрузки голосов: ' + error.message)
          }
@@ -107,163 +103,12 @@ const GamesPage = ({ isArchive = false }: Props) => {
    // Универсальный рефетч
    const refresh = () => setRefetch((prev) => !prev)
 
-   // Голосование
-   const voteGame = async (gameId: number) => {
-      if (!userId) return
-      setLoading(true)
-      try {
-         const { error } = await supabase.from('votes').insert({ user_id: userId, game_id: gameId })
-         if (error) throw error
-         message.success('Вы записаны на игру')
-         setUserVotes((prev) => [...prev, { id: Date.now(), user_id: userId, game_id: gameId }])
-         refresh()
-      } catch (error: any) {
-         message.error(error.message)
-      } finally {
-         setLoading(false)
-         setConfirmOpen(false)
-      }
-   }
-
-   // Отмена голоса
-   const unvoteGame = async (gameId: number) => {
-      if (!userId) return
-      setLoading(true)
-      try {
-         const { error } = await supabase.from('votes').delete().eq('user_id', userId).eq('game_id', gameId)
-
-         if (error) throw error
-         message.success('Запись отменена')
-         setUserVotes((prev) => prev.filter((vote) => vote.game_id !== gameId))
-         refresh()
-      } catch (error: any) {
-         message.error(error.message)
-      } finally {
-         setLoading(false)
-         setConfirmOpen(false)
-      }
-   }
-
    // Обработчики модалок
    const openCreateModal = () => setIsModalCreateOpen(true)
    const closeCreateModal = () => setIsModalCreateOpen(false)
 
    const openEditModal = (id: number) => setModalEdit({ open: true, id })
    const closeEditModal = () => setModalEdit({ open: false, id: 0 })
-
-   const openUsersDrawer = (id: number) => setDrawerUsers({ open: true, id })
-   const closeUsersDrawer = () => setDrawerUsers({ open: false, id: 0 })
-
-   const GameStatus = ({ total, limit }: { total: number; limit: number }) => (
-      <Badge
-         status={total >= limit ? 'error' : 'success'}
-         text={
-            <span className={total >= limit ? s.extraFull : s.extraSuccess}>
-               {total >= limit ? 'Нет мест' : 'Есть места'}
-            </span>
-         }
-      />
-   )
-
-   const ExtraActions = ({ id }: { id: number }) => (
-      <>
-         {!isArchive && <FormOutlined className={s.editGameBtn} onClick={() => openEditModal(id)} />}
-         {isArchive && <Badge status="default" text={<span className={s.extraClose}>Игра состоялась</span>} />}
-      </>
-   )
-
-   const GameDetails = ({ game }: { game: GameType }) => {
-      const [start, end] = game.game_time
-      return (
-         <Descriptions bordered column={1} size="small">
-            <Descriptions.Item label="Дата игры">{dayjs(game.game_date).format(formatDate)}</Descriptions.Item>
-            <Descriptions.Item label="Время игры">
-               {dayjs(start).format(formatTime)} – {dayjs(end).format(formatTime)}
-            </Descriptions.Item>
-            <Descriptions.Item label="Адрес">{game.place_address}</Descriptions.Item>
-            <Descriptions.Item label="Лимит игроков">{game.players_limit}</Descriptions.Item>
-            <Descriptions.Item label="Участников">
-               <Flex justify="space-between" align="center">
-                  <strong>{game.votes_count}</strong>
-                  {game.votes_count > 0 && (
-                     <Button size="small" onClick={() => openUsersDrawer(game.id)}>
-                        Список
-                     </Button>
-                  )}
-               </Flex>
-            </Descriptions.Item>
-            <Descriptions.Item label="Цена">{game.game_price} ₽</Descriptions.Item>
-            <Descriptions.Item label="Условия">
-               <Flex justify="space-between" align="center">
-                  <span>Оплата сразу</span>
-                  <Tooltip title="После резервирования места, необходимо оплатить игру в течении 10 мин., иначе бронь будет автоматически снята">
-                     <QuestionCircleOutlined style={{ fontSize: 20, color: '#1890ff' }} />
-                  </Tooltip>
-               </Flex>
-            </Descriptions.Item>
-         </Descriptions>
-      )
-   }
-
-   const ActionButton = ({ game }: { game: GameType }) => {
-      if (isArchive) return null
-
-      const isFull = game.players_total >= game.players_limit
-      const hasVoted = userVotes.some((vote) => vote.game_id === game.id)
-
-      return hasVoted ? (
-         <Popconfirm
-            title="Отменить запись?"
-            description="Вы уверены, что хотите отменить запись на эту игру?"
-            open={confirmOpen && confirmTarget === game.id}
-            onConfirm={() => unvoteGame(game.id)}
-            okText="Да, отменить"
-            cancelText="Нет"
-            onCancel={() => {
-               setConfirmOpen(false)
-               setConfirmTarget(null)
-            }}
-         >
-            <Button
-               danger
-               block
-               style={{ marginTop: 16 }}
-               onClick={() => {
-                  setConfirmTarget(game.id)
-                  setConfirmOpen(true)
-               }}
-            >
-               Отменить запись
-            </Button>
-         </Popconfirm>
-      ) : (
-         <Popconfirm
-            title="Записаться на игру?"
-            description="Подтвердите запись. Место будет зарезервировано."
-            open={confirmOpen && confirmTarget === game.id}
-            onConfirm={() => voteGame(game.id)}
-            okText="Да, записаться"
-            cancelText="Нет"
-            onCancel={() => {
-               setConfirmOpen(false)
-               setConfirmTarget(null)
-            }}
-         >
-            <Button
-               type="primary"
-               block
-               style={{ marginTop: 16 }}
-               disabled={isFull}
-               onClick={() => {
-                  setConfirmTarget(game.id)
-                  setConfirmOpen(true)
-               }}
-            >
-               {isFull ? 'Мест нет' : 'Записаться'}
-            </Button>
-         </Popconfirm>
-      )
-   }
 
    return (
       <div className={s.wrapReserved}>
@@ -289,15 +134,27 @@ const GamesPage = ({ isArchive = false }: Props) => {
                      key={game.id}
                      title={game.place_name}
                      extra={
-                        <Space>
-                           {!isArchive && <GameStatus total={game.players_total} limit={game.players_limit} />}
-                           {isManager && <ExtraActions id={game.id} />}
-                        </Space>
+                        <GameCardExtra
+                           isArchive={isArchive}
+                           isManager={isManager}
+                           gameId={game.id}
+                           onEdit={openEditModal}
+                           playerTotal={game.players_total}
+                           playerLimit={game.players_limit}
+                        />
                      }
                      className={s.gameCard}
                   >
                      <GameDetails game={game} />
-                     <ActionButton game={game} />
+                     <ActionButton
+                        game={game}
+                        userVoteIds={userVoteIds}
+                        setUserVoteIds={setUserVoteIds}
+                        isArchive={isArchive}
+                        setLoading={setLoading}
+                        userId={userId}
+                        refresh={refresh}
+                     />
                   </Card>
                ))}
             </Flex>
@@ -306,7 +163,6 @@ const GamesPage = ({ isArchive = false }: Props) => {
          {/* Модалки */}
          {isModalCreateOpen && <ModalCreateGame onClose={closeCreateModal} onSuccess={refresh} />}
          {modalEdit.open && <ModalEditGame id={modalEdit.id} onClose={closeEditModal} onSuccess={refresh} />}
-         {drawerUsers.open && <DrawerUsersInfo id={drawerUsers.id} onClose={closeUsersDrawer} />}
       </div>
    )
 }
