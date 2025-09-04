@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button, Form, FormProps, Input, InputNumber, message } from 'antd'
 import { supabase } from '@supabaseDir/supabaseClient'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -13,9 +13,18 @@ const LoginPage = () => {
    const location = useLocation()
    const { signin } = useAuth()
 
+   const [messageApi, contextHolder] = message.useMessage()
+
    const [form] = Form.useForm()
    const [isRegistering, setIsRegistering] = useState(false)
    const [loading, setLoading] = useState(false)
+   const [submitTime, setSubmitTime] = useState<number | null>(null)
+
+   const [honeypotName] = useState('custom_field_' + Math.random().toString(36).substr(2, 9))
+
+   useEffect(() => {
+      setSubmitTime(Date.now())
+   }, [isRegistering])
 
    const from = location.state?.from || '/'
 
@@ -65,10 +74,10 @@ const LoginPage = () => {
             data.session && handleSignIn(data.session)
          }
       } catch (err: any) {
-         if (err.code === 'invalid_credentials') {
-            message.error('Неправильные email или пароль')
+         if (err.message === 'Invalid login credentials') {
+            messageApi.error('Неправильные email или пароль')
          } else {
-            message.error(err.message)
+            messageApi.error(err.message)
          }
       } finally {
          setLoading(false)
@@ -76,6 +85,23 @@ const LoginPage = () => {
    }
 
    const onFinish = (values: any) => {
+      // 1. Honeypot
+      const unknownFields = Object.keys(values).filter(
+         (key) => !['email', 'password', 'confirm', 'user_name', 'phone', 'prefix'].includes(key),
+      )
+
+      for (const key of unknownFields) {
+         if (values[key]) return
+      }
+
+      // 2. Time check
+      const now = Date.now()
+      const timeElapsed = now - (submitTime || now)
+      if (timeElapsed < 2000) {
+         message.warning('Подождите немного перед отправкой формы')
+         return
+      }
+
       const resultValues = {
          email: values.email,
          password: values.password,
@@ -94,6 +120,7 @@ const LoginPage = () => {
 
    return (
       <div className={s['wrap-login']}>
+         {contextHolder}
          <div className={s['wrap-login__block']}>
             <div className={s['wrap-login__block-header']}>
                <h2>{isRegistering ? 'Регистрация' : 'Вход'}</h2>
@@ -118,6 +145,9 @@ const LoginPage = () => {
                      label="Пароль"
                   >
                      <Input.Password size="large" placeholder="Пароль" minLength={6} />
+                  </Form.Item>
+                  <Form.Item noStyle name={honeypotName}>
+                     <Input type="text" autoComplete="off" style={{ display: 'none' }} />
                   </Form.Item>
 
                   {isRegistering && (
