@@ -20,10 +20,10 @@ export const ActionButton = ({ game, userVoteIds, setUserVoteIds, isArchive, use
 
    if (isArchive) return null
 
-   const { players_total, players_limit, id } = game
+   const { confirmed_players_count, players_limit, id } = game
 
    const hasVoted = userVoteIds.includes(id)
-   const isFull = players_total >= players_limit
+   const isFull = confirmed_players_count >= players_limit
 
    // Голосование
    const voteGame = async (gameId: number) => {

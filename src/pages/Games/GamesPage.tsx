@@ -18,13 +18,13 @@ const GamesPage = ({ isArchive = false }: Props) => {
    const [modalEdit, setModalEdit] = useState({ open: false, id: 0 })
 
    const [refetch, setRefetch] = useState(false)
-   const [loading, setLoading] = useState(true)
+   const [loading, setLoading] = useState(true) // общая загрузка при первом входе
    const [games, setGames] = useState<GameType[]>([])
    const [userId, setUserId] = useState<number | null>(null)
    const [userVoteIds, setUserVoteIds] = useState<number[]>([])
    const [isManager, setIsManager] = useState(false)
 
-   // Получение пользователя
+   // Получение пользователя и его прав
    useEffect(() => {
       const loadUser = async () => {
          setLoading(true)
@@ -45,7 +45,7 @@ const GamesPage = ({ isArchive = false }: Props) => {
             if (userError) throw userError
 
             setUserId(userData.id)
-            setIsManager(!!userData.is_manager) // устанавливаем флаг
+            setIsManager(!!userData.is_manager)
          } catch (error: any) {
             message.error('Ошибка авторизации: ' + error.message)
          } finally {
@@ -56,54 +56,46 @@ const GamesPage = ({ isArchive = false }: Props) => {
       loadUser()
    }, [])
 
-   // Загрузка голоса пользователя
+   // Загрузка голосов и игр только после получения userId
    useEffect(() => {
       if (!userId) return
 
-      const loadVote = async () => {
-         try {
-            const { data, error } = await supabase.from('votes').select('*').eq('user_id', userId)
-
-            if (error) throw error
-
-            const voteIds = data.map((item) => item.game_id)
-            setUserVoteIds(voteIds)
-         } catch (error: any) {
-            message.error('Ошибка загрузки голосов: ' + error.message)
-         }
-      }
-
-      loadVote()
-   }, [userId])
-
-   // Загрузка игр
-   useEffect(() => {
-      const fetchGames = async () => {
+      const fetchAllData = async () => {
          setLoading(true)
          try {
-            const { data, error } = await supabase
+            // Загружаем game_id, за которые пользователь проголосовал
+            const { data: votesData, error: votesError } = await supabase
+               .from('votes')
+               .select('game_id')
+               .eq('user_id', userId)
+
+            if (votesError) throw votesError
+            const voteIds = votesData.map((v) => v.game_id)
+            setUserVoteIds(voteIds)
+
+            // Загружаем игры
+            const { data: gamesData, error: gamesError } = await supabase
                .from('view_games')
                .select('*')
                .eq('is_active', !isArchive)
                .order('game_date', { ascending: true })
                .order('game_time', { ascending: true })
 
-            if (error) throw error
-            setGames(data || [])
+            if (gamesError) throw gamesError
+
+            setGames(gamesData || [])
          } catch (error: any) {
-            message.error('Ошибка загрузки игр: ' + error.message)
+            message.error('Ошибка загрузки данных: ' + error.message)
          } finally {
             setLoading(false)
          }
       }
 
-      fetchGames()
-   }, [isArchive, refetch])
+      fetchAllData()
+   }, [userId, isArchive, refetch])
 
-   // Универсальный рефетч
    const refresh = () => setRefetch((prev) => !prev)
 
-   // Обработчики модалок
    const openCreateModal = () => setIsModalCreateOpen(true)
    const closeCreateModal = () => setIsModalCreateOpen(false)
 
@@ -139,7 +131,7 @@ const GamesPage = ({ isArchive = false }: Props) => {
                            isManager={isManager}
                            gameId={game.id}
                            onEdit={openEditModal}
-                           playerTotal={game.players_total}
+                           playerTotal={game.confirmed_players_count}
                            playerLimit={game.players_limit}
                         />
                      }
@@ -160,7 +152,6 @@ const GamesPage = ({ isArchive = false }: Props) => {
             </Flex>
          )}
 
-         {/* Модалки */}
          {isModalCreateOpen && <ModalCreateGame onClose={closeCreateModal} onSuccess={refresh} />}
          {modalEdit.open && <ModalEditGame id={modalEdit.id} onClose={closeEditModal} onSuccess={refresh} />}
       </div>
