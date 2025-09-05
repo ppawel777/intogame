@@ -1,22 +1,30 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button, Form, FormProps, Input, InputNumber, message } from 'antd'
 import { supabase } from '@supabaseDir/supabaseClient'
-// import HCaptcha from '@hcaptcha/react-hcaptcha'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@context/providers/AuthProvider/AuthProvider'
 import { set_cookie } from '@utils/auth'
 import { Session } from '@supabase/supabase-js'
 
-import './index.scss'
+import s from './LoginPage.module.scss'
 
 const LoginPage = () => {
    const navigate = useNavigate()
    const location = useLocation()
    const { signin } = useAuth()
 
+   const [messageApi, contextHolder] = message.useMessage()
+
    const [form] = Form.useForm()
    const [isRegistering, setIsRegistering] = useState(false)
    const [loading, setLoading] = useState(false)
+   const [submitTime, setSubmitTime] = useState<number | null>(null)
+
+   const [honeypotName] = useState('custom_field_' + Math.random().toString(36).substr(2, 9))
+
+   useEffect(() => {
+      setSubmitTime(Date.now())
+   }, [isRegistering])
 
    const from = location.state?.from || '/'
 
@@ -26,10 +34,7 @@ const LoginPage = () => {
       signin(() => {
          set_cookie({ name: 'access_token', value: access_token })
          set_cookie({ name: 'refresh_token', value: refresh_token })
-         // set_cookie({ name: 'user_id', value: id })
-         navigate(from, {
-            replace: true,
-         })
+         navigate(from, { replace: true })
       })
    }
 
@@ -37,14 +42,6 @@ const LoginPage = () => {
       setLoading(true)
       try {
          if (isRegistering) {
-            // const { data, error } = await supabase.rpc('register_user', {
-            //    email: values.email,
-            //    password: values.password,
-            //    user_data: {
-            //       user_name: values.user_name,
-            //       phone: values.phone,
-            //    },
-            // })
             const { data: authData, error } = await supabase.auth.signUp({
                email: values.email,
                password: values.password,
@@ -57,6 +54,7 @@ const LoginPage = () => {
             })
 
             if (error) throw error
+
             const { error: publicError } = await supabase.from('users').insert({
                uuid: authData.user?.id,
                email: values.email,
@@ -65,7 +63,7 @@ const LoginPage = () => {
             })
 
             if (publicError) throw publicError
-            // console.log('authData', authData)
+
             authData.session && handleSignIn(authData.session)
          } else {
             const { data, error } = await supabase.auth.signInWithPassword({
@@ -73,18 +71,37 @@ const LoginPage = () => {
                password: values.password,
             })
             if (error) throw error
-            // console.log('data', data)
             data.session && handleSignIn(data.session)
          }
       } catch (err: any) {
-         if (err.code === 'invalid_credentials') message.error('Неправильные email или пароль')
-         else message.error(err.message)
+         if (err.message === 'Invalid login credentials') {
+            messageApi.error('Неправильные email или пароль')
+         } else {
+            messageApi.error(err.message)
+         }
       } finally {
          setLoading(false)
       }
    }
 
    const onFinish = (values: any) => {
+      // Honeypot
+      const unknownFields = Object.keys(values).filter(
+         (key) => !['email', 'password', 'confirm', 'user_name', 'phone', 'prefix'].includes(key),
+      )
+
+      for (const key of unknownFields) {
+         if (values[key]) return
+      }
+
+      // Time check
+      const now = Date.now()
+      const timeElapsed = now - (submitTime || now)
+      if (timeElapsed < 2000) {
+         message.warning('Подождите немного перед отправкой формы')
+         return
+      }
+
       const resultValues = {
          email: values.email,
          password: values.password,
@@ -93,43 +110,34 @@ const LoginPage = () => {
       }
       handleAuth(resultValues)
    }
+
    const layout: FormProps = {
       colon: false,
       labelAlign: 'left',
-      labelCol: {
-         span: 8,
-      },
-      wrapperCol: {
-         span: 14,
-      },
+      labelCol: { span: 8 },
+      wrapperCol: { span: 14 },
    }
 
-   // const handleVerificationSuccess = (token, ekey) => {
-   //    console.log('token', token)
-   //    console.log('ekey', ekey)
-   // }
-
    return (
-      <div className="wrap-login">
-         <div className="wrap-login__block">
-            <div className="wrap-login__block-header">
+      <div className={s['wrap-login']}>
+         {contextHolder}
+         <div className={s['wrap-login__block']}>
+            <div className={s['wrap-login__block-header']}>
                <h2>{isRegistering ? 'Регистрация' : 'Вход'}</h2>
             </div>
-            <div className="wrap-login__block-auth">
+            <div className={s['wrap-login__block-auth']}>
                <Form {...layout} form={form} className="login-form" name="auth_form" onFinish={onFinish}>
                   <Form.Item
                      name="email"
                      label="Почта"
                      rules={[
-                        {
-                           type: 'email',
-                           message: 'Введите коррректный email',
-                        },
+                        { type: 'email', message: 'Введите корректный email' },
                         { required: true, message: 'Введите email' },
                      ]}
                   >
                      <Input placeholder="Email" />
                   </Form.Item>
+
                   <Form.Item
                      name="password"
                      rules={[{ required: true, message: 'Введите пароль' }]}
@@ -138,6 +146,10 @@ const LoginPage = () => {
                   >
                      <Input.Password size="large" placeholder="Пароль" minLength={6} />
                   </Form.Item>
+                  <Form.Item noStyle name={honeypotName}>
+                     <Input type="text" autoComplete="off" style={{ display: 'none' }} />
+                  </Form.Item>
+
                   {isRegistering && (
                      <>
                         <Form.Item
@@ -152,13 +164,14 @@ const LoginPage = () => {
                                     if (!value || getFieldValue('password') === value) {
                                        return Promise.resolve()
                                     }
-                                    return Promise.reject('Пароли должны совпадать')
+                                    return Promise.reject(new Error('Пароли должны совпадать'))
                                  },
                               }),
                            ]}
                         >
                            <Input.Password placeholder="Подтвердите пароль" minLength={6} />
                         </Form.Item>
+
                         <Form.Item
                            name="user_name"
                            label="Имя пользователя"
@@ -167,6 +180,7 @@ const LoginPage = () => {
                         >
                            <Input placeholder="Имя пользователя" />
                         </Form.Item>
+
                         <Form.Item name="phone" label="Телефон">
                            <InputNumber
                               addonBefore={
@@ -181,15 +195,13 @@ const LoginPage = () => {
                         </Form.Item>
                      </>
                   )}
-                  {/* <HCaptcha
-                     sitekey="ES_92f2697a832a46b993db247ba5307458"
-                     onVerify={(token, ekey) => handleVerificationSuccess(token, ekey)}
-                  /> */}
+
                   <Form.Item wrapperCol={{ ...layout.wrapperCol }} label=" ">
                      <Button block size="large" type="primary" htmlType="submit" loading={loading}>
                         {isRegistering ? 'Зарегистрироваться' : 'Войти'}
                      </Button>
                   </Form.Item>
+
                   <Form.Item wrapperCol={{ ...layout.wrapperCol }} label=" ">
                      <Button block size="large" type="primary" onClick={() => setIsRegistering(!isRegistering)}>
                         {isRegistering ? 'Уже есть аккаунт? Войти' : 'Нет аккаунта? Регистрация'}

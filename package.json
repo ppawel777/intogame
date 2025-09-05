@@ -20,7 +20,6 @@
    "author": "",
    "license": "ISC",
    "devDependencies": {
-      "@hcaptcha/react-hcaptcha": "^1.12.0",
       "@originjs/vite-plugin-require-context": "^1.0.9",
       "@types/antd": "^1.0.0",
       "@types/node": "^20.12.4",

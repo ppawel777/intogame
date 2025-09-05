@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+import { useEffect, useState } from 'react'
 import { supabase } from '@supabaseDir/supabaseClient'
 import { DatePicker, Form, FormProps, InputNumber, Select, TimePicker, message } from 'antd'
 import dayjs from 'dayjs'
-import { useEffect, useState } from 'react'
-import { formatDate, formatTime } from '../GamesHelper'
+import { formatDate, formatTime } from '../gameComponentHelpers'
 
 type Props = {
    form: any
@@ -62,7 +61,7 @@ const FormComponent = ({ form, initialValues, isCreate = false }: Props) => {
          <Form.Item name="game_time" label="Время проведения">
             <TimePicker.RangePicker format={formatTime} />
          </Form.Item>
-         <Form.Item name="game_price" label="Цена игры, руб.">
+         <Form.Item name="game_price" label="Общая стоимость игры, руб.">
             <InputNumber />
          </Form.Item>
          <Form.Item name="players_limit" label="Допустимое число игроков">

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Avatar, Button, Drawer, List, Space, message } from 'antd'
+import { Avatar, Badge, Button, Drawer, List, Space, message } from 'antd'
 import { supabase } from '@supabaseDir/supabaseClient'
 import { useEffect, useState } from 'react'
 import { LikeOutlined, MessageOutlined, StarOutlined, UserOutlined } from '@ant-design/icons'
@@ -39,6 +39,30 @@ const DrawerUsersInfo = ({ id, onClose }: Props) => {
       </Space>
    )
 
+   const UserInfo = ({
+      user_name,
+      avatar_url,
+      status,
+   }: {
+      user_name: string | null
+      avatar_url: string | null
+      status: string | null
+   }) => {
+      const isConfirmed = status === 'confirmed'
+      const badgeText = isConfirmed ? 'В игре' : 'Не оплачено'
+      const badgeColor = isConfirmed ? 'green' : 'orange'
+
+      return (
+         <Badge color={badgeColor} count={badgeText} offset={[30, -12]}>
+            <List.Item.Meta
+               avatar={<Avatar src={avatar_url} style={{ backgroundColor: '#87d068' }} icon={<UserOutlined />} />}
+               title={user_name}
+               description="Описание"
+            />
+         </Badge>
+      )
+   }
+
    return (
       <Drawer
          closable
@@ -63,13 +87,7 @@ const DrawerUsersInfo = ({ id, onClose }: Props) => {
                   ]}
                   extra={<Button>Связаться</Button>}
                >
-                  <List.Item.Meta
-                     avatar={
-                        <Avatar src={item.avatar_url} style={{ backgroundColor: '#87d068' }} icon={<UserOutlined />} />
-                     }
-                     title={item.user_name}
-                     description="Описание"
-                  />
+                  <UserInfo user_name={item.user_name} avatar_url={item.avatar_url} status={item.status_payment} />
                </List.Item>
             )}
          />

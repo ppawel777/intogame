@@ -1,5 +1,5 @@
 import { Form, Modal, message } from 'antd'
-import FormComponent from './FormComponent'
+import FormComponent from '../components/FormComponent/FormComponent'
 import { supabase } from '@supabaseDir/supabaseClient'
 import { useState } from 'react'
 import { GameFormValuesType } from '@typesDir/gameTypes'
