@@ -43,4 +43,7 @@ export type UserFromGame = {
    is_manager: boolean
    game_id: number
    status_payment: 'pending' | 'confirmed' | 'cancelled' | 'failed' | null
+   skill_level: 'Новичок' | 'Начинающий' | 'Любитель' | 'Опытный любитель' | 'Полупрофи' | 'Профи'
+   birth_year: number
+   position: 'Нападающий' | 'Защитник' | 'Вратарь' | 'Полузащитник' | 'Центральный' | 'Универсал'
 }

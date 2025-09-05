@@ -105,10 +105,10 @@ const GamesPage = ({ isArchive = false }: Props) => {
    return (
       <div className={s.wrapReserved}>
          {!isArchive && (
-            <Space size="large" style={{ marginBottom: 16 }}>
-               <h3>Ближайшие игры</h3>
+            <Space size="large" style={{ marginBottom: 16 }} align="center">
+               <h3 style={{ margin: '0 0 16px 0' }}>Ближайшие игры</h3>
                {isManager && (
-                  <Button icon={<PlusOutlined />} onClick={openCreateModal}>
+                  <Button icon={<PlusOutlined />} onClick={openCreateModal} style={{ margin: '0 0 16px 0' }}>
                      Создать игру
                   </Button>
                )}

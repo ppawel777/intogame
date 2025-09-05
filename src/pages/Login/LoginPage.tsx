@@ -85,7 +85,7 @@ const LoginPage = () => {
    }
 
    const onFinish = (values: any) => {
-      // 1. Honeypot
+      // Honeypot
       const unknownFields = Object.keys(values).filter(
          (key) => !['email', 'password', 'confirm', 'user_name', 'phone', 'prefix'].includes(key),
       )
@@ -94,7 +94,7 @@ const LoginPage = () => {
          if (values[key]) return
       }
 
-      // 2. Time check
+      // Time check
       const now = Date.now()
       const timeElapsed = now - (submitTime || now)
       if (timeElapsed < 2000) {

@@ -1,6 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { memo, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { Flex, Menu, MenuProps } from 'antd'
 // import { CarryOutOutlined, NumberOutlined, PlayCircleOutlined, QuestionCircleOutlined } from '@ant-design/icons'
 
@@ -55,17 +54,44 @@ const items: MenuItem[] = [
 
 const NaviateTop = () => {
    const navigate = useNavigate()
+   const location = useLocation()
    const [current, setCurrent] = useState('games/reserved')
 
-   useEffect(() => {
-      navigate(current)
-   }, [current])
+   const menuKeys = items.map((item) => item?.key as string)
 
-   const onClick: MenuProps['onClick'] = (e) => setCurrent(e.key)
+   // Определяем активный ключ на основе текущего пути
+   useEffect(() => {
+      const path = location.pathname
+
+      // Убираем начальный и конечный слэш и разбиваем путь
+      const normalizedPath = path.replace(/^\/|\/$/g, '')
+
+      // Ищем совпадение с ключами меню
+      const matchedKey = menuKeys.find((key) => {
+         // Ключ может быть вложен: например, 'games/reserved'
+         const normalizedKey = key.replace(/^\/|\/$/g, '')
+         return normalizedPath === normalizedKey
+      })
+
+      // Устанавливаем current, только если есть совпадение
+      setCurrent(matchedKey || '')
+   }, [location.pathname])
+
+   const onClick: MenuProps['onClick'] = (e) => {
+      const key = e.key
+      setCurrent(key)
+      navigate(`/${key}`)
+   }
 
    return (
       <Flex justify="space-between" className={s.wrapNavigateTop} align="center">
-         <Menu onClick={onClick} selectedKeys={[current]} mode="horizontal" items={items} className={s.menu} />
+         <Menu
+            onClick={onClick}
+            selectedKeys={current ? [current] : []}
+            mode="horizontal"
+            items={items}
+            className={s.menu}
+         />
          <AvatarProfile />
       </Flex>
    )

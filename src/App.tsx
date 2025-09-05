@@ -3,17 +3,26 @@ import { AuthProvider } from './context/providers/AuthProvider/AuthProvider'
 import RoutesComponent from './routes/Routes'
 import ruRU from 'antd/lib/locale/ru_RU'
 
+const theme = {
+   token: {
+      colorPrimary: '#37b027ff',
+      borderRadius: 4,
+      fontSize: 14,
+      borderRadiusLG: 4,
+      borderRadiusSM: 4,
+   },
+   // components: {
+   //    Button: {
+   //       borderRadius: 4,
+   //    },
+   //    Input: {
+   //       borderRadius: 4,
+   //    },
+   // },
+}
+
 const App = () => (
-   <ConfigProvider
-      locale={ruRU}
-      // theme={{
-      //    token: {
-      //       borderRadius: 2,
-      //       borderRadiusLG: 2,
-      //       borderRadiusSM: 2,
-      //    },
-      // }}
-   >
+   <ConfigProvider locale={ruRU} theme={theme}>
       <AuthProvider>
          <RoutesComponent />
       </AuthProvider>
