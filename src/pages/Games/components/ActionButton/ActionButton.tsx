@@ -73,6 +73,9 @@ export const ActionButton = ({ game, userVoteIds, setUserVoteIds, isArchive, use
          okText="Да, отменить"
          cancelText="Нет"
       >
+         <Button type="primary" block style={{ marginTop: 16 }}>
+            Оплатить
+         </Button>
          <Button danger block style={{ marginTop: 16 }} onClick={() => setConfirmOpen(true)}>
             Отменить запись
          </Button>
