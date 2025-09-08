@@ -30,6 +30,7 @@ export type GameFormValuesType = {
    game_time: [string, string]
    game_price: number
    players_limit: number
+   game_status: 'Активна' | 'Завершена' | 'Отменена' | 'Перенесена'
 }
 
 export type UserFromGame = {

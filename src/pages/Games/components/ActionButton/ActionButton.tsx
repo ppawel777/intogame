@@ -147,14 +147,14 @@ export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: P
       return (
          <Popconfirm
             title="Записаться на игру?"
-            description={`Подтвердите запись. Стоимость: ${game_price} ₽`}
+            description={'Подтвердите запись'}
             onConfirm={voteGame}
             okText="Да, записаться"
             cancelText="Нет"
          >
             {contextHolder}
             <Button type="primary" block style={{ marginTop: 16 }} disabled={isFull}>
-               {isFull ? 'Мест нет' : `Записаться (${game_price} ₽)`}
+               {isFull ? 'Мест нет' : 'Записаться'}
             </Button>
          </Popconfirm>
       )
@@ -163,7 +163,7 @@ export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: P
    return (
       <Popconfirm
          title="Записаться на игру?"
-         description={`Подтвердите запись. Стоимость: ${game_price} ₽`}
+         description={'Подтвердите запись'}
          open={confirmOpen}
          onConfirm={() => {
             voteGame()
@@ -175,7 +175,7 @@ export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: P
       >
          {contextHolder}
          <Button type="primary" block style={{ marginTop: 16 }} disabled={isFull} onClick={() => setConfirmOpen(true)}>
-            {isFull ? 'Мест нет' : `Записаться (${game_price} ₽)`}
+            {isFull ? 'Мест нет' : 'Записаться'}
          </Button>
       </Popconfirm>
    )

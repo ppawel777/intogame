@@ -12,6 +12,7 @@ interface GameFormValues {
    game_price: number
    players_limit: number
    is_active: boolean
+   game_status: 'Активна' | 'Завершена' | 'Отменена' | 'Перенесена'
 }
 
 type Props = {
@@ -47,6 +48,7 @@ const ModalEditGame = ({ id, onClose, onSuccess }: Props) => {
                game_price: data.game_price,
                players_limit: data.players_limit,
                is_active: data.is_active,
+               game_status: data.game_status,
             })
 
             // Заполняем форму
@@ -57,6 +59,7 @@ const ModalEditGame = ({ id, onClose, onSuccess }: Props) => {
                game_price: data.game_price,
                players_limit: data.players_limit,
                is_active: data.is_active,
+               game_status: data.game_status,
             })
          } catch (error: any) {
             console.error('Ошибка загрузки игры:', error)

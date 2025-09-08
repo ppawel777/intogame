@@ -68,13 +68,21 @@ const FormComponent = ({ form, initialValues, isCreate = false }: Props) => {
             <InputNumber />
          </Form.Item>
          {!isCreate && (
-            <Form.Item name="is_active" label="Статус игры">
+            <Form.Item name="game_status" label="Статус игры">
                <Select
+                  options={[
+                     { label: 'Активна', value: 'Активна' },
+                     { label: 'Завершена', value: 'Завершена' },
+                     { label: 'Отменена', value: 'Отменена' },
+                     // { label: 'Перенесена', value: 'Перенесена' },
+                  ]}
+               />
+               {/* <Select
                   options={[
                      { label: 'Активна', value: true },
                      { label: 'Закрыта', value: false },
                   ]}
-               />
+               /> */}
             </Form.Item>
          )}
       </Form>
