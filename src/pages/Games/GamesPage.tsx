@@ -21,8 +21,10 @@ const GamesPage = ({ isArchive = false }: Props) => {
    const [loading, setLoading] = useState(true) // общая загрузка при первом входе
    const [games, setGames] = useState<GameType[]>([])
    const [userId, setUserId] = useState<number | null>(null)
-   const [userVoteIds, setUserVoteIds] = useState<number[]>([])
+   // const [userVoteIds, setUserVoteIds] = useState<number[]>([])
    const [isManager, setIsManager] = useState(false)
+
+   const [messageApi, contextHolder] = message.useMessage()
 
    // Получение пользователя и его прав
    useEffect(() => {
@@ -47,7 +49,7 @@ const GamesPage = ({ isArchive = false }: Props) => {
             setUserId(userData.id)
             setIsManager(!!userData.is_manager)
          } catch (error: any) {
-            message.error('Ошибка авторизации: ' + error.message)
+            messageApi.error('Ошибка авторизации: ' + error.message)
          } finally {
             setLoading(false)
          }
@@ -64,14 +66,14 @@ const GamesPage = ({ isArchive = false }: Props) => {
          setLoading(true)
          try {
             // Загружаем game_id, за которые пользователь проголосовал
-            const { data: votesData, error: votesError } = await supabase
-               .from('votes')
-               .select('game_id')
-               .eq('user_id', userId)
+            // const { data: votesData, error: votesError } = await supabase
+            //    .from('votes')
+            //    .select('game_id')
+            //    .eq('user_id', userId)
 
-            if (votesError) throw votesError
-            const voteIds = votesData.map((v) => v.game_id)
-            setUserVoteIds(voteIds)
+            // if (votesError) throw votesError
+            // const voteIds = votesData.map((v) => v.game_id)
+            // setUserVoteIds(voteIds)
 
             // Загружаем игры
             const { data: gamesData, error: gamesError } = await supabase
@@ -85,7 +87,7 @@ const GamesPage = ({ isArchive = false }: Props) => {
 
             setGames(gamesData || [])
          } catch (error: any) {
-            message.error('Ошибка загрузки данных: ' + error.message)
+            messageApi.error('Ошибка загрузки данных: ' + error.message)
          } finally {
             setLoading(false)
          }
@@ -104,6 +106,7 @@ const GamesPage = ({ isArchive = false }: Props) => {
 
    return (
       <div className={s.wrapReserved}>
+         {contextHolder}
          {!isArchive && (
             <Space size="large" style={{ marginBottom: 16 }} align="center">
                <h3 style={{ margin: '0 0 16px 0' }}>Ближайшие игры</h3>
@@ -140,8 +143,8 @@ const GamesPage = ({ isArchive = false }: Props) => {
                      <GameDetails game={game} />
                      <ActionButton
                         game={game}
-                        userVoteIds={userVoteIds}
-                        setUserVoteIds={setUserVoteIds}
+                        // userVoteIds={userVoteIds}
+                        // setUserVoteIds={setUserVoteIds}
                         isArchive={isArchive}
                         setLoading={setLoading}
                         userId={userId}

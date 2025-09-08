@@ -9,7 +9,7 @@ type GameCardExtraProps = {
    gameId: number
    onEdit?: (id: number) => void
    playerTotal?: number
-   playerLimit?: number
+   playerLimit?: number | null
 }
 
 export const GameCardExtra = ({
