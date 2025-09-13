@@ -7,6 +7,7 @@ import { set_cookie } from '@utils/auth'
 import { Session } from '@supabase/supabase-js'
 
 import s from './LoginPage.module.scss'
+import { localizeSupabaseError } from '@utils/authErrors'
 
 const LoginPage = () => {
    const navigate = useNavigate()
@@ -73,12 +74,9 @@ const LoginPage = () => {
             if (error) throw error
             data.session && handleSignIn(data.session)
          }
-      } catch (err: any) {
-         if (err.message === 'Invalid login credentials') {
-            messageApi.error('Неправильные email или пароль')
-         } else {
-            messageApi.error(err.message)
-         }
+      } catch (error: any) {
+         const localizedMessage = localizeSupabaseError(error.message)
+         messageApi.error(localizedMessage)
       } finally {
          setLoading(false)
       }
@@ -106,7 +104,7 @@ const LoginPage = () => {
          email: values.email,
          password: values.password,
          user_name: values.user_name,
-         phone: '+7' + values.phone,
+         phone: values.phone ? '+7' + values.phone : null,
       }
       handleAuth(resultValues)
    }

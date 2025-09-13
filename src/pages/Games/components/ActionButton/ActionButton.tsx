@@ -1,95 +1,179 @@
 import { useState } from 'react'
-import { Button, message } from 'antd'
-import { Popconfirm } from 'antd'
+import { Button, Popconfirm, message } from 'antd'
+import { supabase } from '@supabaseDir/supabaseClient'
 
 import { GameType } from '@typesDir/gameTypes'
-import { supabase } from '@supabaseDir/supabaseClient'
 
 type Props = {
    game: GameType
-   userVoteIds: number[]
-   setUserVoteIds: React.Dispatch<React.SetStateAction<number[]>>
    isArchive?: boolean
    setLoading: React.Dispatch<React.SetStateAction<boolean>>
    userId: number | null
    refresh: () => void
 }
 
-export const ActionButton = ({ game, userVoteIds, setUserVoteIds, isArchive, userId, setLoading, refresh }: Props) => {
+export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: Props) => {
    const [confirmOpen, setConfirmOpen] = useState(false)
 
-   if (isArchive) return null
+   const [messageApi, contextHolder] = message.useMessage()
 
-   const { confirmed_players_count, players_limit, id } = game
+   if (isArchive || !userId) return null
 
-   const hasVoted = userVoteIds.includes(id)
-   const isFull = confirmed_players_count >= players_limit
+   const { id, game_price, players_limit, confirmed_players_count, game_status, user_vote_status } = game
 
-   // Голосование
-   const voteGame = async (gameId: number) => {
-      if (!userId) return
+   const isFull = confirmed_players_count >= (players_limit || 0)
+   const isActive = game_status === 'Активна' || !game_status
+
+   const isConfirmed = user_vote_status === 'confirmed'
+   const isPending = user_vote_status === 'pending'
+   const isCancelledOrFailed = ['cancelled', 'failed'].includes(user_vote_status || '')
+
+   const voteGame = async () => {
+      if (!isActive) return
+      // message.error('Игра не активна')
+      if (!game_price || game_price <= 0) return
+      // message.error('Цена не указана')
+
       setLoading(true)
       try {
-         const { error } = await supabase.from('votes').insert({ user_id: userId, game_id: gameId })
+         const { error } = await supabase.from('votes').insert({ user_id: userId, game_id: id, status: 'pending' })
+
          if (error) throw error
-         message.success('Вы записаны на игру')
-         setUserVoteIds((prev) => [...prev, gameId])
+
          refresh()
       } catch (error: any) {
-         message.error(error.message)
+         messageApi.error(error.message)
       } finally {
          setLoading(false)
       }
    }
 
-   // Отмена голоса
-   const unvoteGame = async (gameId: number) => {
-      if (!userId) return
+   const unvoteGame = async () => {
       setLoading(true)
       try {
-         const { error } = await supabase.from('votes').delete().eq('user_id', userId).eq('game_id', gameId)
+         const { error } = await supabase.from('votes').delete().eq('user_id', userId).eq('game_id', id)
 
          if (error) throw error
-         message.success('Запись отменена')
-         setUserVoteIds((prev) => prev.filter((vote) => vote !== gameId))
+
+         messageApi.success('Запись отменена')
          refresh()
       } catch (error: any) {
-         message.error(error.message)
+         messageApi.error(error.message)
       } finally {
          setLoading(false)
       }
    }
 
-   return hasVoted ? (
-      <Popconfirm
-         title="Отменить запись?"
-         description="Вы уверены, что хотите отменить запись на эту игру?"
-         open={confirmOpen}
-         onConfirm={() => {
-            unvoteGame(id)
-            setConfirmOpen(false)
-         }}
-         onCancel={() => setConfirmOpen(false)}
-         okText="Да, отменить"
-         cancelText="Нет"
-      >
-         <Button danger block style={{ marginTop: 16 }} onClick={() => setConfirmOpen(true)}>
-            Отменить запись
+   const handlePayment = async () => {
+      if (!isPending) {
+         return messageApi.error('Оплата невозможна: статус не "ожидает оплаты"')
+      }
+
+      setLoading(true)
+      try {
+         const response = await fetch('/api/create-payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ gameId: id, userId }),
+         })
+
+         const data = await response.json()
+
+         if (response.ok) {
+            window.location.href = data.confirmation_url
+         } else {
+            throw new Error(data.error || 'Ошибка при создании платежа')
+         }
+      } catch (error: any) {
+         messageApi.error(error.message)
+      } finally {
+         setLoading(false)
+      }
+   }
+
+   if (!isActive) {
+      return (
+         <Button block disabled>
+            Игра {game_status}
          </Button>
-      </Popconfirm>
-   ) : (
+      )
+   }
+
+   if (isConfirmed) {
+      return (
+         <>
+            {contextHolder}
+            <Button type="primary" block style={{ marginTop: 16 }} disabled>
+               Оплачено
+            </Button>
+            <Popconfirm
+               title="Отменить запись?"
+               description="Вы уверены, что хотите отменить запись на игру?"
+               onConfirm={unvoteGame}
+               okText="Да"
+               cancelText="Нет"
+            >
+               <Button danger block style={{ marginTop: 16 }}>
+                  Отменить запись
+               </Button>
+            </Popconfirm>
+         </>
+      )
+   }
+
+   if (isPending) {
+      return (
+         <>
+            {contextHolder}
+            <Button type="primary" block style={{ marginTop: 16 }} onClick={handlePayment}>
+               Оплатить
+            </Button>
+            <Popconfirm
+               title="Отменить запись?"
+               description="Вы уверены, что хотите отменить запись?"
+               onConfirm={unvoteGame}
+               okText="Да"
+               cancelText="Нет"
+            >
+               <Button danger block style={{ marginTop: 16 }}>
+                  Отменить запись
+               </Button>
+            </Popconfirm>
+         </>
+      )
+   }
+
+   if (isCancelledOrFailed) {
+      return (
+         <Popconfirm
+            title="Записаться на игру?"
+            description={'Подтвердите запись'}
+            onConfirm={voteGame}
+            okText="Да, записаться"
+            cancelText="Нет"
+         >
+            {contextHolder}
+            <Button type="primary" block style={{ marginTop: 16 }} disabled={isFull}>
+               {isFull ? 'Мест нет' : 'Записаться'}
+            </Button>
+         </Popconfirm>
+      )
+   }
+
+   return (
       <Popconfirm
          title="Записаться на игру?"
-         description="Подтвердите запись. Место будет зарезервировано."
+         description={'Подтвердите запись'}
          open={confirmOpen}
          onConfirm={() => {
-            voteGame(id)
+            voteGame()
             setConfirmOpen(false)
          }}
          onCancel={() => setConfirmOpen(false)}
          okText="Да, записаться"
          cancelText="Нет"
       >
+         {contextHolder}
          <Button type="primary" block style={{ marginTop: 16 }} disabled={isFull} onClick={() => setConfirmOpen(true)}>
             {isFull ? 'Мест нет' : 'Записаться'}
          </Button>

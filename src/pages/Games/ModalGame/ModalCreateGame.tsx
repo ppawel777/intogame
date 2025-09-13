@@ -16,7 +16,12 @@ const ModalCreateGame = ({ onClose, onSuccess }: Props) => {
    const handleCreate = async (values: GameFormValuesType) => {
       setLoading(true)
       try {
-         const { error } = await supabase.from('games').insert([values])
+         const gameData = {
+            ...values,
+            game_status: values.game_status || 'Активна',
+         }
+
+         const { error } = await supabase.from('games').insert([gameData])
 
          if (error) throw error
 

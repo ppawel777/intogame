@@ -5,7 +5,7 @@ import ruRU from 'antd/lib/locale/ru_RU'
 
 const theme = {
    token: {
-      colorPrimary: '#37b027ff',
+      colorPrimary: '#61b556',
       borderRadius: 4,
       fontSize: 14,
       borderRadiusLG: 4,
