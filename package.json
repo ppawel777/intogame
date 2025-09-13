@@ -1,9 +1,9 @@
 {
-   "name": "vigru",
+   "name": "intogame",
    "version": "1.0.0",
    "private": true,
    "description": "",
-   "homepage": "https://ppawel777.github.io/v-igru/",
+   "homepage": "https://ppawel777.github.io/intogame/",
    "scripts": {
       "dev": "vite",
       "build": "cross-env NODE_OPTIONS=\"--max_old_space_size=4096\" vite build",

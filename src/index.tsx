@@ -14,7 +14,7 @@ import './layouts/main.scss'
 // const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose
 // const store = createStore(rootReducer, composeEnhancers(applyMiddleware(thunk)))
 
-const ViGruApp = (
+const IntoGame = (
    // <StoreProvider>
    <HashRouter>
       <App />
@@ -30,4 +30,4 @@ const ViGruApp = (
 
 // export type RootState = ReturnType<typeof store.getState>
 
-ReactDOM.createRoot(document.getElementById('wrap') as HTMLElement).render(ViGruApp)
+ReactDOM.createRoot(document.getElementById('wrap') as HTMLElement).render(IntoGame)
