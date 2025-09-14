@@ -22,7 +22,6 @@ yarn-debug.log
 .env.development.local
 .env.test.local
 .env.production.local
-!.env.example  # Но пример можно оставить
 
 # IDE и редакторы
 .idea/
