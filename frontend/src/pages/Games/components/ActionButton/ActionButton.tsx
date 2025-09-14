@@ -69,23 +69,38 @@ export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: P
          return messageApi.error('Оплата невозможна: статус не "ожидает оплаты"')
       }
 
+      // Защита от повторного нажатия
       setLoading(true)
+
       try {
          const response = await fetch('/api/create-payment', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+               'Content-Type': 'application/json',
+            },
             body: JSON.stringify({ gameId: id, userId }),
          })
 
          const data = await response.json()
 
-         if (response.ok) {
+         if (!response.ok) {
+            throw new Error(data.error || `Ошибка ${response.status}`)
+         }
+
+         // YooKassa возвращает объект с `confirmation_url`
+         if (data.confirmation_url) {
+            // Перенаправляем пользователя на страницу оплаты
             window.location.href = data.confirmation_url
          } else {
-            throw new Error(data.error || 'Ошибка при создании платежа')
+            throw new Error('Не получен URL для оплаты')
          }
       } catch (error: any) {
-         messageApi.error(error.message)
+         console.error('Ошибка оплаты:', error)
+         messageApi.error(
+            error.message.includes('429')
+               ? 'Слишком много запросов. Подождите немного.'
+               : error.message || 'Не удалось создать платёж. Попробуйте позже.',
+         )
       } finally {
          setLoading(false)
       }

@@ -48,11 +48,11 @@ export default defineConfig({
    },
    plugins: [react(), eslint(), ViteRequireContext(), mkcert()],
    server: {
-    proxy: {
-      '/api': {
-        target: 'https://localhost:3000',
-        changeOrigin: true,
+      proxy: {
+         '/api': {
+            target: 'https://localhost:3000',
+            changeOrigin: true,
+         },
       },
-    },
-  },
+   },
 })
