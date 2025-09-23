@@ -51,7 +51,12 @@ export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: P
    const unvoteGame = async () => {
       setLoading(true)
       try {
-         const { error } = await supabase.from('votes').delete().eq('user_id', userId).eq('game_id', id)
+         const { error } = await supabase
+            .from('votes')
+            .update({ status: 'cancelled' })
+            .eq('user_id', userId)
+            .eq('game_id', id)
+            .in('status', ['pending', 'confirmed'])
 
          if (error) throw error
 
@@ -73,12 +78,18 @@ export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: P
       setLoading(true)
 
       try {
+         const returnUrl = `${window.location.origin}/payment-result`
          const response = await fetch('/api/create-payment', {
             method: 'POST',
             headers: {
                'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ gameId: id, userId }),
+            body: JSON.stringify({
+               amount: game_price,
+               description: `Оплата участия в игре #${id}`,
+               metadata: { gameId: id, userId },
+               returnUrl,
+            }),
          })
 
          const data = await response.json()
@@ -88,9 +99,19 @@ export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: P
          }
 
          // YooKassa возвращает объект с `confirmation_url`
-         if (data.confirmation_url) {
+         if (data.paymentId) {
+            try {
+               localStorage.setItem('lastPaymentId', data.paymentId)
+            } catch (e) {
+               // ignore storage errors (Safari private mode etc.)
+               void e
+            }
+         }
+
+         const redirectUrl = data.confirmation_url || data.confirmationUrl
+         if (redirectUrl) {
             // Перенаправляем пользователя на страницу оплаты
-            window.location.href = data.confirmation_url
+            window.location.href = redirectUrl
          } else {
             throw new Error('Не получен URL для оплаты')
          }
@@ -101,6 +122,29 @@ export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: P
                ? 'Слишком много запросов. Подождите немного.'
                : error.message || 'Не удалось создать платёж. Попробуйте позже.',
          )
+      } finally {
+         setLoading(false)
+      }
+   }
+
+   const handleRefund = async () => {
+      setLoading(true)
+      try {
+         const paymentId = localStorage.getItem('lastPaymentId')
+         if (!paymentId) throw new Error('paymentId не найден')
+
+         const resp = await fetch('/api/refund-payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ paymentId }),
+         })
+         const data = await resp.json()
+         if (!resp.ok) throw new Error(data?.error || `Ошибка ${resp.status}`)
+
+         messageApi.success('Оплата отменена')
+         refresh()
+      } catch (e: any) {
+         messageApi.error(e.message || 'Не удалось отменить оплату')
       } finally {
          setLoading(false)
       }
@@ -118,8 +162,8 @@ export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: P
       return (
          <>
             {contextHolder}
-            <Button type="primary" block style={{ marginTop: 16 }} disabled>
-               Оплачено
+            <Button danger block style={{ marginTop: 16 }} onClick={handleRefund}>
+               Отменить оплату
             </Button>
             <Popconfirm
                title="Отменить запись?"

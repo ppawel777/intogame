@@ -1,6 +1,6 @@
 {
   "watch": ["src"],
   "ext": "ts,js,json",
-  "exec": "node --loader ts-node/esm src/index.ts",
+  "exec": "node --require ts-node/register/transpile-only src/index.ts",
   "ignore": ["src/**/*.spec.ts"]
 }

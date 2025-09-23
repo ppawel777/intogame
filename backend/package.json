@@ -1,17 +1,18 @@
 {
   "name": "intogame-backend",
   "version": "1.0.0",
-  "type": "module",
   "private": true,
   "scripts": {
     "dev": "nodemon",
-    "build": "tsc",
-    "start": "node dist/index.js"
+    "build": "tsc -p tsconfig.json",
+    "start": "node build/index.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
     "express": "^4.21.2",
+    "@supabase/supabase-js": "^2.57.0",
+    "dayjs": "^1.11.11",
     "yookassa": "^0.1.1"
   },
   "devDependencies": {

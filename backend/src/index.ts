@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // Импортируем маршруты
-// import paymentRoutes from './routes/payment';
+import paymentRoutes from './routes/payment';
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '3000', 10);
@@ -22,7 +22,7 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Backend is running!' });
 });
 
-// app.use('/api', paymentRoutes);
+app.use('/api', paymentRoutes);
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on http://0.0.0.0:${PORT}`);
