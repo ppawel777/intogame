@@ -2,8 +2,7 @@
   "name": "intogame",
   "version": "1.0.0",
   "scripts": {
-      "install:all": "npm install && npm --prefix frontend install && npm --prefix backend install",
-      "dev": "concurrently \"npm run dev --prefix frontend\" \"npm run dev --prefix backend\""
-   },
-  "devDependencies": {}
+    "install:all": "npm install && npm --prefix frontend install && npm --prefix backend install",
+    "dev": "concurrently \"npm run dev --prefix frontend\" \"npm run dev --prefix backend\""
+  }
 }

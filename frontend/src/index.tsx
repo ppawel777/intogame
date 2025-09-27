@@ -5,6 +5,8 @@ import { HashRouter } from 'react-router-dom'
 // import { rootReducer } from './store/reducers'
 // import { thunk } from 'redux-thunk'
 
+import '@ant-design/v5-patch-for-react-19'
+
 import App from './App'
 
 import './index.scss'

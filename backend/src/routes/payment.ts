@@ -69,15 +69,17 @@ router.post('/create-payment', async (req, res) => {
 
     // Привязываем payment_id к записи голоса (если есть)
     try {
-      const { error, data } = await supabaseAdmin
-        .from('votes')
-        .update({ payment_id: payment.id })
-        .eq('user_id', metadata.userId)
-        .eq('game_id', metadata.gameId)
-        .in('status', ['pending', 'confirmed'])
-        .select('*');
-      if (error) console.error('[create-payment] supabase update error:', error);
-      if (!data?.length) console.warn('[create-payment] no votes row matched to set payment_id', { metadata });
+      if (metadata?.userId && metadata?.gameId) {
+        const { error, data } = await supabaseAdmin
+          .from('votes')
+          .update({ payment_id: payment.id })
+          .eq('user_id', Number(metadata.userId))
+          .eq('game_id', Number(metadata.gameId))
+          .in('status', ['pending', 'confirmed'])
+          .select('*');
+        if (error) console.error('[create-payment] supabase update error:', error);
+        if (!data?.length) console.warn('[create-payment] no votes row matched to set payment_id', { metadata });
+      }
     } catch (e) {
       console.warn('[create-payment] Failed to update votes with payment_id', e);
     }
@@ -135,7 +137,7 @@ router.post('/yookassa/webhook', async (req, res) => {
 
     if (!paymentId) return res.status(200).json({ received: true });
 
-    if (event === 'payment.succeeded' || payment?.status === 'succeeded') {
+    if (event === 'payment.succeeded' || payment?.status === 'succeeded' || payment?.paid === true) {
       // Сначала обновляем по payment_id (надёжнее), затем fallback по user/game
       const updatePayload = {
         status: 'confirmed' as const,
@@ -151,15 +153,19 @@ router.post('/yookassa/webhook', async (req, res) => {
         .select('*');
       if (error) console.error('[webhook succeeded] supabase update by payment_id error:', error);
       if (!data?.length && metadata?.userId && metadata?.gameId) {
-        const res2 = await supabaseAdmin
-          .from('votes')
-          .update(updatePayload)
-          .eq('user_id', metadata.userId)
-          .eq('game_id', metadata.gameId)
-          .in('status', ['pending', 'confirmed'])
-          .select('*');
-        if (res2.error) console.error('[webhook succeeded] supabase update by user/game error:', res2.error);
-        if (!res2.data?.length) console.warn('[webhook succeeded] no votes updated', { paymentId, metadata });
+        const userId = Number(metadata.userId);
+        const gameId = Number(metadata.gameId);
+        if (!isNaN(userId) && !isNaN(gameId)) {
+          const res2 = await supabaseAdmin
+            .from('votes')
+            .update(updatePayload)
+            .eq('user_id', userId)
+            .eq('game_id', gameId)
+            .in('status', ['pending', 'confirmed'])
+            .select('*');
+          if (res2.error) console.error('[webhook succeeded] supabase update by user/game error:', res2.error);
+          if (!res2.data?.length) console.warn('[webhook succeeded] no votes updated', { paymentId, metadata });
+        }
       }
     }
 
@@ -177,15 +183,19 @@ router.post('/yookassa/webhook', async (req, res) => {
         .select('*');
       if (error) console.error('[webhook canceled] supabase update by payment_id error:', error);
       if (!data?.length && metadata?.userId && metadata?.gameId) {
-        const res2 = await supabaseAdmin
-          .from('votes')
-          .update(updatePayload)
-          .eq('user_id', metadata.userId)
-          .eq('game_id', metadata.gameId)
-          .in('status', ['pending'])
-          .select('*');
-        if (res2.error) console.error('[webhook canceled] supabase update by user/game error:', res2.error);
-        if (!res2.data?.length) console.warn('[webhook canceled] no votes updated', { paymentId, metadata });
+        const userId = Number(metadata.userId);
+        const gameId = Number(metadata.gameId);
+        if (!isNaN(userId) && !isNaN(gameId)) {
+          const res2 = await supabaseAdmin
+            .from('votes')
+            .update(updatePayload)
+            .eq('user_id', userId)
+            .eq('game_id', gameId)
+            .in('status', ['pending'])
+            .select('*');
+          if (res2.error) console.error('[webhook canceled] supabase update by user/game error:', res2.error);
+          if (!res2.data?.length) console.warn('[webhook canceled] no votes updated', { paymentId, metadata });
+        }
       }
     }
 
@@ -205,7 +215,7 @@ router.post('/verify-payment', async (req, res) => {
     const payment = await getClient().getPayment(paymentId);
     const metadata = payment?.metadata || {};
 
-    if (payment?.status === 'succeeded') {
+    if (payment?.status === 'succeeded' || payment?.paid === true) {
       const updatePayload = {
         status: 'confirmed' as const,
         payment_verified: true,
@@ -220,15 +230,19 @@ router.post('/verify-payment', async (req, res) => {
         .select('*');
       if (error) console.error('[verify succeeded] supabase update by payment_id error:', error);
       if (!data?.length && metadata?.userId && metadata?.gameId) {
-        const res2 = await supabaseAdmin
-          .from('votes')
-          .update(updatePayload)
-          .eq('user_id', metadata.userId)
-          .eq('game_id', metadata.gameId)
-          .in('status', ['pending', 'confirmed'])
-          .select('*');
-        if (res2.error) console.error('[verify succeeded] supabase update by user/game error:', res2.error);
-        if (!res2.data?.length) console.warn('[verify succeeded] no votes updated', { paymentId, metadata });
+        const userId = Number(metadata.userId);
+        const gameId = Number(metadata.gameId);
+        if (!isNaN(userId) && !isNaN(gameId)) {
+          const res2 = await supabaseAdmin
+            .from('votes')
+            .update(updatePayload)
+            .eq('user_id', userId)
+            .eq('game_id', gameId)
+            .in('status', ['pending', 'confirmed'])
+            .select('*');
+          if (res2.error) console.error('[verify succeeded] supabase update by user/game error:', res2.error);
+          if (!res2.data?.length) console.warn('[verify succeeded] no votes updated', { paymentId, metadata });
+        }
       }
     } else if (payment?.status === 'canceled') {
       const updatePayload = {
@@ -244,15 +258,19 @@ router.post('/verify-payment', async (req, res) => {
         .select('*');
       if (error) console.error('[verify canceled] supabase update by payment_id error:', error);
       if (!data?.length && metadata?.userId && metadata?.gameId) {
-        const res2 = await supabaseAdmin
-          .from('votes')
-          .update(updatePayload)
-          .eq('user_id', metadata.userId)
-          .eq('game_id', metadata.gameId)
-          .in('status', ['pending'])
-          .select('*');
-        if (res2.error) console.error('[verify canceled] supabase update by user/game error:', res2.error);
-        if (!res2.data?.length) console.warn('[verify canceled] no votes updated', { paymentId, metadata });
+        const userId = Number(metadata.userId);
+        const gameId = Number(metadata.gameId);
+        if (!isNaN(userId) && !isNaN(gameId)) {
+          const res2 = await supabaseAdmin
+            .from('votes')
+            .update(updatePayload)
+            .eq('user_id', userId)
+            .eq('game_id', gameId)
+            .in('status', ['pending'])
+            .select('*');
+          if (res2.error) console.error('[verify canceled] supabase update by user/game error:', res2.error);
+          if (!res2.data?.length) console.warn('[verify canceled] no votes updated', { paymentId, metadata });
+        }
       }
     }
 
@@ -280,15 +298,21 @@ router.post('/refund-payment', async (req, res) => {
     try {
       const payment = await getClient().getPayment(paymentId);
       const metadata = (payment as any)?.metadata || {};
-      await supabaseAdmin
-        .from('votes')
-        .update({
-          status: 'failed',
-          payment_verified: false,
-        })
-        .eq('user_id', metadata.userId)
-        .eq('game_id', metadata.gameId)
-        .in('status', ['pending', 'confirmed']);
+      if (metadata?.userId && metadata?.gameId) {
+        const userId = Number(metadata.userId);
+        const gameId = Number(metadata.gameId);
+        if (!isNaN(userId) && !isNaN(gameId)) {
+          await supabaseAdmin
+            .from('votes')
+            .update({
+              status: 'failed',
+              payment_verified: false,
+            })
+            .eq('user_id', userId)
+            .eq('game_id', gameId)
+            .in('status', ['pending', 'confirmed']);
+        }
+      }
     } catch (e) {
       console.warn('[refund-payment] Could not update votes after refund', e);
     }
