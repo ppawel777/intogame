@@ -70,13 +70,26 @@ router.post('/create-payment', async (req, res) => {
     // Привязываем payment_id к записи голоса (если есть)
     try {
       if (metadata?.userId && metadata?.gameId) {
+        const userId = Number(metadata.userId);
+        const gameId = Number(metadata.gameId);
+        console.log('[create-payment] Looking for vote:', { userId, gameId, metadata });
+        
+        // Сначала проверим, есть ли запись
+        const { data: existingVote } = await supabaseAdmin
+          .from('votes')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('game_id', gameId);
+        console.log('[create-payment] Existing vote:', existingVote);
+        
         const { error, data } = await supabaseAdmin
           .from('votes')
           .update({ payment_id: payment.id })
-          .eq('user_id', Number(metadata.userId))
-          .eq('game_id', Number(metadata.gameId))
+          .eq('user_id', userId)
+          .eq('game_id', gameId)
           .in('status', ['pending', 'confirmed'])
           .select('*');
+        console.log('[create-payment] Update result:', { error, data });
         if (error) console.error('[create-payment] supabase update error:', error);
         if (!data?.length) console.warn('[create-payment] no votes row matched to set payment_id', { metadata });
       }
