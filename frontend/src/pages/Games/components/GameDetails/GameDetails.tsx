@@ -27,7 +27,7 @@ export const GameDetails = ({ game }: GameDetailsProps) => {
 
    const [drawerUsers, setDrawerUsers] = useState({ open: false, id: 0 })
 
-   const [start, end] = game_time
+   const [start, end] = game_time || ['', '']
 
    const openUsersDrawer = (id: number) => setDrawerUsers({ open: true, id })
    const closeUsersDrawer = () => setDrawerUsers({ open: false, id: 0 })
@@ -58,7 +58,9 @@ export const GameDetails = ({ game }: GameDetailsProps) => {
             </Descriptions.Item>
             <Descriptions.Item label="Цена аренды площадки">{game_price} ₽</Descriptions.Item>
             <Descriptions.Item label="Цена взноса">
-               <span style={{ color: 'green' }}>{players_limit > 0 ? Math.ceil(game_price / players_limit) : '—'} ₽</span>
+               <span style={{ color: 'green' }}>
+                  {players_limit && players_limit > 0 && game_price ? Math.ceil(game_price / players_limit) : '—'} ₽
+               </span>
             </Descriptions.Item>
             {/* <Descriptions.Item label="Цена взноса">
                {game.votes_count > 0 ? (

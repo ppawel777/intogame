@@ -1,39 +1,74 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
+# ===================================
+# === Общие исключения для всего проекта ===
+# ===================================
 
-# testing
-/coverage
+# Зависимости
+node_modules/
+npm-debug.log*
+yarn-error.log
+yarn-debug.log
+.pnpm-debug.log
+*.lock
 
-# production
+# Сборки
+/dist
 /build
+/out
+/.cache
 
-# misc
-.DS_Store
+# Переменные окружения (НИКОГДА не коммитим!)
+.env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
-debug.log
+# IDE и редакторы
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.DS_Store
+
+# Логи
+logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-yarn.lock
-.yarn/*
-!.yarn/releases
-!.yarn/plugins
-!.yarn/sdks
-!.yarn/versions
-.pnp.*
-.idea
-/.idea/
-.vscode
-/.vscode/
 
-package-lock.json
+# Docker
+.dockerignore
+compose.yaml
+docker-compose.override.yml
 
-*.tar.gz
-*.zip
+# macOS
+.DS_Store
+
+
+# ===================================
+# === Frontend специфика ===
+# ===================================
+/frontend/node_modules/
+/frontend/dist
+/frontend/build
+/frontend/.vite
+
+# Если используешь TypeScript
+/frontend/tsconfig.tsbuildinfo
+
+
+# ===================================
+# === Backend специфика ===
+# ===================================
+/backend/node_modules/
+/backend/dist
+/backend/build
+/backend/.nyc_output
+/backend/coverage
+
+# ts-node cache
+/backend/.ts-node

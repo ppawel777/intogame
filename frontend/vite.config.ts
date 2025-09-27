@@ -47,4 +47,14 @@ export default defineConfig({
       },
    },
    plugins: [react(), eslint(), ViteRequireContext(), mkcert()],
+   server: {
+      https: {},
+      proxy: {
+         '/api': {
+            target: 'http://backend:3000',
+            changeOrigin: true,
+            secure: false,
+         },
+      },
+   },
 })

@@ -51,7 +51,12 @@ export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: P
    const unvoteGame = async () => {
       setLoading(true)
       try {
-         const { error } = await supabase.from('votes').delete().eq('user_id', userId).eq('game_id', id)
+         const { error } = await supabase
+            .from('votes')
+            .update({ status: 'cancelled' })
+            .eq('user_id', userId)
+            .eq('game_id', id)
+            .in('status', ['pending', 'confirmed'])
 
          if (error) throw error
 
@@ -69,23 +74,99 @@ export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: P
          return messageApi.error('Оплата невозможна: статус не "ожидает оплаты"')
       }
 
+      // Защита от повторного нажатия
       setLoading(true)
+
       try {
+         const returnUrl = `${window.location.origin}/payment-result`
+         const contributionAmount =
+            players_limit && players_limit > 0 ? Math.ceil((game_price || 0) / players_limit) : game_price || 0
          const response = await fetch('/api/create-payment', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ gameId: id, userId }),
+            headers: {
+               'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+               amount: contributionAmount,
+               description: `Оплата участия в игре #${id}`,
+               metadata: { gameId: id, userId },
+               returnUrl,
+            }),
          })
 
          const data = await response.json()
 
-         if (response.ok) {
-            window.location.href = data.confirmation_url
+         if (!response.ok) {
+            throw new Error(data.error || `Ошибка ${response.status}`)
+         }
+
+         // YooKassa возвращает объект с `confirmation_url`
+         if (data.paymentId) {
+            try {
+               localStorage.setItem('lastPaymentId', data.paymentId)
+            } catch (e) {
+               // ignore storage errors (Safari private mode etc.)
+               void e
+            }
+         }
+
+         const redirectUrl = data.confirmation_url || data.confirmationUrl
+         if (redirectUrl) {
+            // Перенаправляем пользователя на страницу оплаты
+            window.location.href = redirectUrl
          } else {
-            throw new Error(data.error || 'Ошибка при создании платежа')
+            throw new Error('Не получен URL для оплаты')
          }
       } catch (error: any) {
-         messageApi.error(error.message)
+         console.error('Ошибка оплаты:', error)
+         messageApi.error(
+            error.message.includes('429')
+               ? 'Слишком много запросов. Подождите немного.'
+               : error.message || 'Не удалось создать платёж. Попробуйте позже.',
+         )
+      } finally {
+         setLoading(false)
+      }
+   }
+
+   const handleRefund = async () => {
+      setLoading(true)
+      try {
+         // Сначала получаем payment_id из votes
+         const { data: voteData, error: voteError } = await supabase
+            .from('votes')
+            .select('payment_id')
+            .eq('user_id', userId)
+            .eq('game_id', id)
+            .eq('status', 'confirmed')
+            .single()
+
+         if (voteError || !voteData?.payment_id) {
+            throw new Error('Не найден payment_id для возврата')
+         }
+
+         const resp = await fetch('/api/refund-payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ paymentId: voteData.payment_id }),
+         })
+         const data = await resp.json()
+         if (!resp.ok) throw new Error(data?.error || `Ошибка ${resp.status}`)
+
+         // Обновляем статус голоса на cancelled
+         const { error: updateError } = await supabase
+            .from('votes')
+            .update({ status: 'cancelled' })
+            .eq('user_id', userId)
+            .eq('game_id', id)
+            .eq('status', 'confirmed')
+
+         if (updateError) throw updateError
+
+         messageApi.success('Оплата отменена и запись удалена')
+         refresh()
+      } catch (e: any) {
+         messageApi.error(e.message || 'Не удалось отменить оплату')
       } finally {
          setLoading(false)
       }
@@ -103,13 +184,13 @@ export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: P
       return (
          <>
             {contextHolder}
-            <Button type="primary" block style={{ marginTop: 16 }} disabled>
-               Оплачено
-            </Button>
+            <div style={{ textAlign: 'center', marginTop: 16, padding: '8px 0', color: 'green', fontWeight: 'bold' }}>
+               Игра оплачена
+            </div>
             <Popconfirm
                title="Отменить запись?"
-               description="Вы уверены, что хотите отменить запись на игру?"
-               onConfirm={unvoteGame}
+               description="Вы уверены, что хотите отменить запись на игру? Деньги будут возвращены."
+               onConfirm={handleRefund}
                okText="Да"
                cancelText="Нет"
             >
