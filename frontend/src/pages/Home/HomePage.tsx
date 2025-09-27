@@ -4,8 +4,13 @@ import s from './Home.module.scss'
 const HomePage = () => {
    // Test backend
    useEffect(() => {
-      const apiUrl = import.meta.env.VITE_API_BASE_URL || '/api'
-      fetch(`${apiUrl}/health`)
+      const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://intogame.ru'
+      fetch(`${apiUrl}/api/health`, {
+         method: 'GET',
+         headers: {
+            'Content-Type': 'application/json',
+         },
+      })
          .then((res) => {
             if (!res.ok) {
                throw new Error(`HTTP error! status: ${res.status}`)
