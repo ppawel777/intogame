@@ -1,5 +1,23 @@
-**Заполняем .env**
-  
+**Настройка переменных окружения:**
+
+1. **Frontend (.env файл в папке frontend/):**
+`
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+VITE_API_BASE_URL=http://localhost:3000
+`
+
+2. **Backend (.env файл в папке backend/):**
+`
+YOOKASSA_SHOP_ID=your_shop_id
+YOOKASSA_SECRET_KEY=your_secret_key
+YOOKASSA_WEBHOOK_LOGIN=your_webhook_login
+YOOKASSA_WEBHOOK_PASSWORD=your_webhook_password
+FRONTEND_URL=https://localhost:5173
+SUPABASE_URL=your_supabase_project_url
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+`
+
 
 **Локальная разработка:**
 
@@ -23,19 +41,21 @@
 
 1. Собираем front и копируем в каталог /var/www/intogame.ru/html
 
-`cd /home/intogame/frontent-delpoy/frontend/`
+`cd ~/frontend-deploy/frontend/`
 `git pull`
+`npm install`
+# Убедитесь, что создан .env файл с переменными VITE_SUPABASE_URL и VITE_SUPABASE_ANON_KEY
 `npm run build`
 `sudo cp -r build/* /var/www/intogame.ru/html/`
 `sudo systemctl restart nginx`
 
 2. Собираем backend
 
-`cd /home/intogame/frontent-delpoy/`
+`cd ~/frontend-deploy/`
 `git pull`
 `sudo cp -r backend/* /var/www/intogame.ru/backend/`
-`sudo systemctl restart nginx
-`pm2 start npm --name "backend" -- start`     # Зап
+`sudo systemctl restart nginx`
+`pm2 start npm --name "backend" -- start`     # Запуск
 `pm2 restart backend`      # Перезапуск
   
 Полезные команды:
