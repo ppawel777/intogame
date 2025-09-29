@@ -15,7 +15,7 @@ type Props = {
 export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: Props) => {
    const [confirmOpen, setConfirmOpen] = useState(false)
 
-   const [messageApi, contextHolder] = message.useMessage()
+   const [, contextHolder] = message.useMessage()
 
    if (isArchive || !userId) return null
 
@@ -42,7 +42,7 @@ export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: P
 
          refresh()
       } catch (error: any) {
-         messageApi.error(error.message)
+         message.error(error.message)
       } finally {
          setLoading(false)
       }
@@ -51,19 +51,24 @@ export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: P
    const unvoteGame = async () => {
       setLoading(true)
       try {
-         const { error } = await supabase
+         const { error, data } = await supabase
             .from('votes')
             .update({ status: 'cancelled' })
-            .eq('user_id', userId)
-            .eq('game_id', id)
-            .in('status', ['pending', 'confirmed'])
+            .eq('user_id', String(userId))
+            .eq('game_id', String(id))
+            .eq('status', 'pending')
+            .select('*')
 
          if (error) throw error
 
-         messageApi.success('Запись отменена')
+         if (!data || data.length === 0) {
+            message.warning('Подходящих записей не найдено')
+         } else {
+            message.success('Запись отменена')
+         }
          refresh()
       } catch (error: any) {
-         messageApi.error(error.message)
+         message.error(error.message)
       } finally {
          setLoading(false)
       }
@@ -71,7 +76,7 @@ export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: P
 
    const handlePayment = async () => {
       if (!isPending) {
-         return messageApi.error('Оплата невозможна: статус не "ожидает оплаты"')
+         return message.error('Оплата невозможна: статус не "ожидает оплаты"')
       }
 
       // Защита от повторного нажатия
@@ -119,7 +124,7 @@ export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: P
          }
       } catch (error: any) {
          console.error('Ошибка оплаты:', error)
-         messageApi.error(
+         message.error(
             error.message.includes('429')
                ? 'Слишком много запросов. Подождите немного.'
                : error.message || 'Не удалось создать платёж. Попробуйте позже.',
@@ -150,8 +155,30 @@ export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: P
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ paymentId: voteData.payment_id }),
          })
-         const data = await resp.json()
-         if (!resp.ok) throw new Error(data?.error || `Ошибка ${resp.status}`)
+         // Надёжный парсинг ответа (JSON или текст)
+         const raw = await resp.text()
+         let data: any = {}
+         try {
+            data = raw ? JSON.parse(raw) : {}
+         } catch (_) {
+            data = { error: raw }
+         }
+         if (!resp.ok) {
+            let serverMsg = ''
+            if (data && typeof data === 'object') {
+               const details = (data as any).details
+               if (details && typeof details === 'object') {
+                  serverMsg = details.description || details.message || details.error || ''
+               } else if (typeof details === 'string') {
+                  serverMsg = details
+               }
+               if (!serverMsg && typeof (data as any).error === 'string') {
+                  serverMsg = (data as any).error
+               }
+            }
+            if (!serverMsg) serverMsg = raw || ''
+            throw new Error(serverMsg || `Ошибка ${resp.status}`)
+         }
 
          // Обновляем статус голоса на cancelled
          const { error: updateError } = await supabase
@@ -163,10 +190,17 @@ export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: P
 
          if (updateError) throw updateError
 
-         messageApi.success('Оплата отменена и запись удалена')
+         message.success('Оплата отменена и запись удалена')
          refresh()
       } catch (e: any) {
-         messageApi.error(e.message || 'Не удалось отменить оплату')
+         const msg =
+            typeof e?.message === 'string' && e.message.trim()
+               ? e.message
+               : typeof e === 'string' && e.trim()
+                 ? e
+                 : 'Не удалось отменить оплату'
+         console.error('handleRefund error:', e)
+         message.error(msg)
       } finally {
          setLoading(false)
       }
@@ -174,9 +208,12 @@ export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: P
 
    if (!isActive) {
       return (
-         <Button block disabled>
-            Игра {game_status}
-         </Button>
+         <>
+            {contextHolder}
+            <Button block disabled>
+               Игра {game_status}
+            </Button>
+         </>
       )
    }
 
