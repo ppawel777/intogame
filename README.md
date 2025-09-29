@@ -54,6 +54,8 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 `cd ~/frontend-deploy/`
 `git pull`
 `sudo cp -r backend/* /var/www/intogame.ru/backend/`
+`cd /var/www/intogame.ru/backend/`
+`npm run build`
 `sudo systemctl restart nginx`
 `pm2 start npm --name "backend" -- start`     # Запуск
 `pm2 restart backend`      # Перезапуск

@@ -11,7 +11,7 @@ const router = express.Router();
 const getConfig = () => {
   const shopId = process.env.YOOKASSA_SHOP_ID || '';
   const secretKey = process.env.YOOKASSA_SECRET_KEY || '';
-  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const frontendUrl = process.env.FRONTEND_URL || 'https://localhost:5173';
   return { shopId, secretKey, frontendUrl };
 };
 
@@ -21,7 +21,6 @@ const getClient = () => {
 };
 
 // POST /api/create-payment
-// Body: { amount: number | string, description?: string, returnUrl?: string, metadata?: Record<string, any> }
 router.post('/create-payment', async (req, res) => {
   try {
     const { shopId, secretKey, frontendUrl } = getConfig();
@@ -31,11 +30,11 @@ router.post('/create-payment', async (req, res) => {
 
     const {
       amount,
-      description = 'Оплата заказа',
+      description = 'Оплата участия в игре',
       returnUrl,
       metadata = {},
     } = req.body || {};
-
+    console.log('[create-payment] req.body:', req.body);
     if (!amount || Number.isNaN(Number(amount))) {
       return res.status(400).json({ error: 'Invalid amount' });
     }
@@ -45,7 +44,7 @@ router.post('/create-payment', async (req, res) => {
 
     const confirmationReturnUrl = typeof returnUrl === 'string' && returnUrl.length > 0
       ? returnUrl
-      : `${frontendUrl}/payment-result`;
+      : `${frontendUrl}/#/games/reserved`;
 
     const payment = await getClient().createPayment({
       amount: {
@@ -70,10 +69,24 @@ router.post('/create-payment', async (req, res) => {
     // Привязываем payment_id к записи голоса (если есть)
     try {
       if (metadata?.userId && metadata?.gameId) {
-        const userId = Number(metadata.userId);
-        const gameId = Number(metadata.gameId);
+        console.log('[create-payment] Types:', {
+          userId: metadata.userId,
+          userIdType: typeof metadata.userId,
+          gameId: metadata.gameId,
+          gameIdType: typeof metadata.gameId,
+        });
+        const userId = String(metadata.userId);
+        const gameId = String(metadata.gameId);
         console.log('[create-payment] Looking for vote:', { userId, gameId, metadata });
         
+        const { data: allVotes } = await supabaseAdmin
+  .from('votes')
+  .select('*')
+  .eq('user_id', userId)
+  .eq('game_id', gameId);
+
+console.log('[create-payment] All matching votes (any status):', allVotes);
+
         // Сначала проверим, есть ли запись
         const { data: existingVote } = await supabaseAdmin
           .from('votes')
@@ -81,6 +94,7 @@ router.post('/create-payment', async (req, res) => {
           .eq('user_id', userId)
           .eq('game_id', gameId);
         console.log('[create-payment] Existing vote:', existingVote);
+        console.log('[create-payment] Payment:', payment);
         
         const { error, data } = await supabaseAdmin
           .from('votes')
@@ -166,9 +180,9 @@ router.post('/yookassa/webhook', async (req, res) => {
         .select('*');
       if (error) console.error('[webhook succeeded] supabase update by payment_id error:', error);
       if (!data?.length && metadata?.userId && metadata?.gameId) {
-        const userId = Number(metadata.userId);
-        const gameId = Number(metadata.gameId);
-        if (!isNaN(userId) && !isNaN(gameId)) {
+        const userId = String(metadata.userId);
+        const gameId = String(metadata.gameId);
+        // if (!isNaN(userId) && !isNaN(gameId)) {
           const res2 = await supabaseAdmin
             .from('votes')
             .update(updatePayload)
@@ -178,7 +192,7 @@ router.post('/yookassa/webhook', async (req, res) => {
             .select('*');
           if (res2.error) console.error('[webhook succeeded] supabase update by user/game error:', res2.error);
           if (!res2.data?.length) console.warn('[webhook succeeded] no votes updated', { paymentId, metadata });
-        }
+        // }
       }
     }
 

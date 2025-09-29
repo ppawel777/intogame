@@ -78,7 +78,7 @@ export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: P
       setLoading(true)
 
       try {
-         const returnUrl = `${window.location.origin}/payment-result`
+         const returnUrl = `${window.location.origin}/#/games/reserved`
          const contributionAmount =
             players_limit && players_limit > 0 ? Math.ceil((game_price || 0) / players_limit) : game_price || 0
          const response = await fetch('/api/create-payment', {

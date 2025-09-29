@@ -45,7 +45,6 @@ const GamesPage = ({ isArchive = false }: Props) => {
                .single()
 
             if (userError) throw userError
-
             setUserId(userData.id)
             setIsManager(!!userData.is_manager)
          } catch (error: any) {
