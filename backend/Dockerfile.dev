@@ -9,8 +9,11 @@ RUN npm install
 # Копируем .env и исходники
 COPY . .
 
+# Устанавливаем nodemon
+RUN npm install -g nodemon
+
 # Переменные окружения
 ENV NODE_ENV=development
 
-# Запуск сервера (с ts-node для разработки)
+# Запуск сервера
 CMD ["npm", "run", "dev"]

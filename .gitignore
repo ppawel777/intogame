@@ -16,7 +16,7 @@ yarn-debug.log
 /out
 /.cache
 
-# Переменные окружения (НИКОГДА не коммитим!)
+# Переменные окружения
 .env
 .env.local
 .env.development.local
@@ -57,7 +57,6 @@ docker-compose.override.yml
 /frontend/build
 /frontend/.vite
 
-# Если используешь TypeScript
 /frontend/tsconfig.tsbuildinfo
 
 

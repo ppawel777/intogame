@@ -11,11 +11,14 @@ services:
       - ./frontend:/app
       - /app/node_modules
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=${NODE_ENV:-development}
     depends_on:
       - backend
     stdin_open: true
     tty: true
+    # Не запускать в продакшене
+    profiles:
+      - development
 
   backend:
     build:
@@ -27,7 +30,7 @@ services:
       - ./backend:/app
       - /app/node_modules
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=${NODE_ENV:-development}
       - PORT=3000
     env_file:
       - ./backend/.env
