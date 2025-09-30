@@ -21,7 +21,6 @@ const GamesPage = ({ isArchive = false }: Props) => {
    const [loading, setLoading] = useState(true) // общая загрузка при первом входе
    const [games, setGames] = useState<GameType[]>([])
    const [userId, setUserId] = useState<number | null>(null)
-   // const [userVoteIds, setUserVoteIds] = useState<number[]>([])
    const [isManager, setIsManager] = useState(false)
 
    const [messageApi, contextHolder] = message.useMessage()
@@ -64,17 +63,6 @@ const GamesPage = ({ isArchive = false }: Props) => {
       const fetchAllData = async () => {
          setLoading(true)
          try {
-            // Загружаем game_id, за которые пользователь проголосовал
-            // const { data: votesData, error: votesError } = await supabase
-            //    .from('votes')
-            //    .select('game_id')
-            //    .eq('user_id', userId)
-
-            // if (votesError) throw votesError
-            // const voteIds = votesData.map((v) => v.game_id)
-            // setUserVoteIds(voteIds)
-
-            // Загружаем игры
             const { data: gamesData, error: gamesError } = await supabase
                .from('view_games')
                .select('*')

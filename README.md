@@ -1,4 +1,5 @@
 *** Настройка переменных окружения: ***
+Создаем файл .env и по примеру env.example заполняем.
 
 1. ** Frontend (.env файл в папке frontend/): **
 `cd frontend`
@@ -9,20 +10,9 @@
 `cp env.example .env`
 `
 
-
 *** Локальная разработка: ***
-
 `npm run install:all` # Установить всё сразу
-`npm run dev` # Запустить оба сервера
-
 `docker compose --profile development up --build -d` # Запуск через Docker Compose (frontend и backend)
-
-
-Другие команды docker:
-- docker compose --profile development down
-- docker compose --profile development logs backend/frontend
-- docker ps
-- docker logs frontend-dev-backend-1 --follow/tail -100
 
 После запуска:
 	Frontend: https://localhost:5173
@@ -32,7 +22,6 @@
 *** Запуск на сервере: ***
 
 1. ** Собираем front **
-
 `cd ~/frontend-deploy/frontend/`
 `git pull`
 `npm install`
@@ -42,8 +31,14 @@
 `sudo systemctl restart nginx`
 
 2. ** Собираем backend **
-
 `cd ~/frontend-deploy/`
 `git pull`
 # Убедитесь, что создан /backend/.env файл
 `sudo docker compose up --build -d` # Запуск через Docker Compose (только backend)
+
+
+Другие команды docker:
+- docker compose --profile development down
+- docker compose --profile development logs backend / frontend
+- docker ps
+- docker logs frontend-dev-backend-1 --follow/tail -100

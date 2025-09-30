@@ -22,6 +22,8 @@ export type GameType = {
    reserved_count: number
    confirmed_count: number
    user_vote_status: 'pending' | 'confirmed' | 'cancelled' | 'failed' | null
+   user_payment_id?: string | null
+   user_payment_status?: string | null
 }
 
 export type GameFormValuesType = {

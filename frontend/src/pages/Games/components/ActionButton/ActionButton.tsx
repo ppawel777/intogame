@@ -3,6 +3,7 @@ import { Button, Popconfirm, message } from 'antd'
 import { supabase } from '@supabaseDir/supabaseClient'
 
 import { GameType } from '@typesDir/gameTypes'
+import { extractErrorMessage } from '@pages/Games/utils/games_utils'
 
 type Props = {
    game: GameType
@@ -102,6 +103,11 @@ export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: P
          const data = await response.json()
 
          if (!response.ok) {
+            if (data.details?.includes('срок бронирования истёк')) {
+               message.warning(data.details)
+               refresh()
+               return
+            }
             throw new Error(data.error || `Ошибка ${response.status}`)
          }
 
@@ -137,25 +143,18 @@ export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: P
    const handleRefund = async () => {
       setLoading(true)
       try {
-         // Сначала получаем payment_id из votes
-         const { data: voteData, error: voteError } = await supabase
-            .from('votes')
-            .select('payment_id')
-            .eq('user_id', userId)
-            .eq('game_id', id)
-            .eq('status', 'confirmed')
-            .single()
+         const { user_payment_id: paymentId } = game
 
-         if (voteError || !voteData?.payment_id) {
-            throw new Error('Не найден payment_id для возврата')
+         if (!paymentId) {
+            throw new Error('Не найден платёж для возврата')
          }
 
          const resp = await fetch('/api/refund-payment', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ paymentId: voteData.payment_id }),
+            body: JSON.stringify({ paymentId }),
          })
-         // Надёжный парсинг ответа (JSON или текст)
+
          const raw = await resp.text()
          let data: any = {}
          try {
@@ -163,48 +162,93 @@ export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: P
          } catch (_) {
             data = { error: raw }
          }
+
          if (!resp.ok) {
-            let serverMsg = ''
-            if (data && typeof data === 'object') {
-               const details = (data as any).details
-               if (details && typeof details === 'object') {
-                  serverMsg = details.description || details.message || details.error || ''
-               } else if (typeof details === 'string') {
-                  serverMsg = details
-               }
-               if (!serverMsg && typeof (data as any).error === 'string') {
-                  serverMsg = (data as any).error
-               }
-            }
-            if (!serverMsg) serverMsg = raw || ''
-            throw new Error(serverMsg || `Ошибка ${resp.status}`)
+            const msg = extractErrorMessage(data) || `Ошибка ${resp.status}`
+            throw new Error(msg)
          }
-
-         // Обновляем статус голоса на cancelled
-         const { error: updateError } = await supabase
-            .from('votes')
-            .update({ status: 'cancelled' })
-            .eq('user_id', userId)
-            .eq('game_id', id)
-            .eq('status', 'confirmed')
-
-         if (updateError) throw updateError
 
          message.success('Оплата отменена и запись удалена')
          refresh()
       } catch (e: any) {
-         const msg =
-            typeof e?.message === 'string' && e.message.trim()
-               ? e.message
-               : typeof e === 'string' && e.trim()
-                 ? e
-                 : 'Не удалось отменить оплату'
+         const msg = e.message || 'Не удалось отменить оплату'
          console.error('handleRefund error:', e)
          message.error(msg)
       } finally {
          setLoading(false)
       }
    }
+   // const handleRefund = async () => {
+   //    setLoading(true)
+   //    try {
+   //       // Сначала получаем payment_id из votes
+   //       const { data: voteData, error: voteError } = await supabase
+   //          .from('votes')
+   //          .select('payment_id')
+   //          .eq('user_id', userId)
+   //          .eq('game_id', id)
+   //          .eq('status', 'confirmed')
+   //          .single()
+
+   //       if (voteError || !voteData?.payment_id) {
+   //          throw new Error('Не найден payment_id для возврата')
+   //       }
+
+   //       const resp = await fetch('/api/refund-payment', {
+   //          method: 'POST',
+   //          headers: { 'Content-Type': 'application/json' },
+   //          body: JSON.stringify({ paymentId: voteData.payment_id }),
+   //       })
+   //       // Надёжный парсинг ответа (JSON или текст)
+   //       const raw = await resp.text()
+   //       let data: any = {}
+   //       try {
+   //          data = raw ? JSON.parse(raw) : {}
+   //       } catch (_) {
+   //          data = { error: raw }
+   //       }
+   //       if (!resp.ok) {
+   //          let serverMsg = ''
+   //          if (data && typeof data === 'object') {
+   //             const details = (data as any).details
+   //             if (details && typeof details === 'object') {
+   //                serverMsg = details.description || details.message || details.error || ''
+   //             } else if (typeof details === 'string') {
+   //                serverMsg = details
+   //             }
+   //             if (!serverMsg && typeof (data as any).error === 'string') {
+   //                serverMsg = (data as any).error
+   //             }
+   //          }
+   //          if (!serverMsg) serverMsg = raw || ''
+   //          throw new Error(serverMsg || `Ошибка ${resp.status}`)
+   //       }
+
+   //       // Обновляем статус голоса на cancelled
+   //       const { error: updateError } = await supabase
+   //          .from('votes')
+   //          .update({ status: 'cancelled' })
+   //          .eq('user_id', userId)
+   //          .eq('game_id', id)
+   //          .eq('status', 'confirmed')
+
+   //       if (updateError) throw updateError
+
+   //       message.success('Оплата отменена и запись удалена')
+   //       refresh()
+   //    } catch (e: any) {
+   //       const msg =
+   //          typeof e?.message === 'string' && e.message.trim()
+   //             ? e.message
+   //             : typeof e === 'string' && e.trim()
+   //               ? e
+   //               : 'Не удалось отменить оплату'
+   //       console.error('handleRefund error:', e)
+   //       message.error(msg)
+   //    } finally {
+   //       setLoading(false)
+   //    }
+   // }
 
    if (!isActive) {
       return (
@@ -254,7 +298,7 @@ export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: P
                cancelText="Нет"
             >
                <Button danger block style={{ marginTop: 16 }}>
-                  Отменить запись
+                  Отменить бронь
                </Button>
             </Popconfirm>
          </>

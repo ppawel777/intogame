@@ -93,7 +93,7 @@ export const GameDetails = ({ game }: GameDetailsProps) => {
             <Descriptions.Item label="Условия">
                <Flex justify="space-between" align="center">
                   <span>Оплата сразу</span>
-                  <Tooltip title="После резервирования места, необходимо оплатить игру в течении 10 мин., иначе бронь будет автоматически снята">
+                  <Tooltip title="После брони места, необходимо оплатить игру в течении 1 часа, иначе бронь будет автоматически снята">
                      <QuestionCircleOutlined style={{ fontSize: 20, color: '#1890ff' }} />
                   </Tooltip>
                </Flex>

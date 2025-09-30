@@ -20,7 +20,23 @@ const DrawerUsersInfo = ({ id, onClose }: Props) => {
       try {
          const { data, error } = await supabase.from('view_users_from_game').select('*').eq('game_id', id)
          if (error) throw error
-         data.length && setUsersList(data)
+         if (data.length) {
+            const sorted = data.sort((a, b) => {
+               const statusOrder = { confirmed: 0, pending: 1 }
+               const statusA = statusOrder[a.status_payment as keyof typeof statusOrder] ?? 2
+               const statusB = statusOrder[b.status_payment as keyof typeof statusOrder] ?? 2
+
+               if (statusA !== statusB) {
+                  return statusA - statusB
+               }
+
+               const nameA = a.user_name?.trim().toLowerCase() || ''
+               const nameB = b.user_name?.trim().toLowerCase() || ''
+
+               return nameA.localeCompare(nameB, 'ru')
+            })
+            setUsersList(sorted)
+         }
       } catch (error: any) {
          message.error(error.message)
       } finally {

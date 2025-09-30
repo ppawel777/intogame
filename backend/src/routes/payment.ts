@@ -4,6 +4,7 @@ import YooKassa from 'yookassa';
 import { supabaseAdmin } from '../lib/supabase';
 import { randomUUID } from 'crypto';
 import dotenv from 'dotenv';
+import { CANCELLATION_REASONS } from './utils/payment_utils';
 dotenv.config();
 
 const router = express.Router();
@@ -24,7 +25,7 @@ const getClient = () => {
 router.post('/create-payment', async (req, res) => {
   try {
     const { shopId, secretKey, frontendUrl } = getConfig();
-    
+
     if (!shopId || !secretKey) {
       console.error('[create-payment] Не настроены учетные данные YooKassa');
       return res.status(500).json({ error: 'Сервис оплаты временно недоступен' });
@@ -37,7 +38,7 @@ router.post('/create-payment', async (req, res) => {
       metadata = {},
     } = req.body || {};
 
-    // === Проверка суммы ===
+    // Проверка суммы
     if (!amount || Number.isNaN(Number(amount))) {
       console.warn('[create-payment] Передана некорректная сумма:', { amount });
       return res.status(400).json({ error: 'Указана некорректная сумма' });
@@ -46,119 +47,106 @@ router.post('/create-payment', async (req, res) => {
     const numericAmount = typeof amount === 'string' ? parseFloat(amount) : Number(amount);
     const value = numericAmount.toFixed(2);
 
-    // === Формирование URL для возврата ===
-    const confirmationReturnUrl = typeof returnUrl === 'string' && returnUrl.trim().length > 0
-      ? returnUrl.trim()
-      : `${frontendUrl}/#/games/reserved`;
+    // URL возврата
+    const confirmationReturnUrl =
+      typeof returnUrl === 'string' && returnUrl.trim().length > 0
+        ? returnUrl.trim()
+        : `${frontendUrl}/#/games/reserved`;
 
-    // === Создание платежа через YooKassa ===
-    let payment;
+    // Поиск голосования (если есть metadata)
+    let voteId: string | null = null;
+    if (metadata?.userId && metadata?.gameId) {
+      const userId = String(metadata.userId);
+      const gameId = String(metadata.gameId);
+
+      const { data: voteData, error } = await supabaseAdmin
+        .from('votes')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('game_id', gameId)
+        .eq('status', 'pending')
+        .maybeSingle();
+
+      if (error) {
+        console.error('[create-payment] Ошибка поиска голоса:', error);
+        return res.status(500).json({ error: 'Ошибка при поиске голоса' });
+      }
+
+      if (!voteData) {
+        console.warn('[create-payment] Голос не найден или уже не pending:', { userId, gameId });
+        return res.status(404).json({ 
+          error: 'Запись для оплаты не найдена', 
+          details: 'Срок бронирования истёк. Пожалуйста, запишитесь на игру снова.' 
+        });
+      }
+
+      voteId = String(voteData.id);
+    }
+
+    // Создание платежа в YooKassa
+    let yookassaPayment;
     try {
-      payment = await getClient().createPayment(
+      yookassaPayment = await getClient().createPayment(
         {
-          amount: {
-            value,
-            currency: 'RUB',
-          },
+          amount: { value, currency: 'RUB' },
           capture: true,
           description,
-          confirmation: {
-            type: 'redirect',
-            return_url: confirmationReturnUrl,
+          confirmation: { type: 'redirect', return_url: confirmationReturnUrl },
+          metadata: {
+            ...metadata,
+            vote_id: voteId,
           },
-          metadata,
         },
         randomUUID()
       );
     } catch (err: any) {
-      console.error(
-        '[create-payment] Ошибка при создании платежа в YooKassa:',
-        err?.response?.data || err.message || err
-      );
+      console.error('[create-payment] Ошибка создания платежа:', err?.response?.data || err.message);
       return res.status(502).json({
         error: 'Не удалось создать платёж',
-        детали: err?.response?.data || err.message || 'Неизвестная ошибка'
+        детали: err?.response?.data || err.message,
       });
     }
 
-    const confirmationUrl = payment?.confirmation?.confirmation_url;
-
+    const confirmationUrl = yookassaPayment?.confirmation?.confirmation_url;
     if (!confirmationUrl) {
-      console.error('[create-payment] Не получен URL подтверждения от YooKassa:', payment);
+      console.error('[create-payment] Нет confirmation_url:', yookassaPayment);
       return res.status(502).json({ error: 'Не удалось получить ссылку для оплаты' });
     }
 
-    // === Привязка payment_id к голосованию (если есть метаданные) ===
-    try {
-      if (metadata?.userId && metadata?.gameId) {
-        const userId = String(metadata.userId);
-        const gameId = String(metadata.gameId);
+    // Сохраняем платёж в таблицу payments
+    if (voteId) {
+      const { error: paymentInsertError } = await supabaseAdmin.from('payments').insert({
+        id: yookassaPayment.id,
+        vote_id: voteId,
+        amount: numericAmount,
+        currency: 'RUB',
+        status: yookassaPayment.status,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
 
-        console.log('[create-payment] Поиск голоса для привязки платежа:', { userId, gameId });
-
-        // Проверяем существование записи
-        const { data: existingVoteData, error: fetchError } = await supabaseAdmin
-          .from('votes')
-          .select('*')
-          .eq('user_id', userId)
-          .eq('game_id', gameId);
-
-        if (fetchError) {
-          console.error('[create-payment] Ошибка при поиске голоса в базе данных:', fetchError);
-          return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
-        }
-
-        if (!existingVoteData || existingVoteData.length === 0) {
-          console.warn('[create-payment] Голос не найден:', { userId, gameId });
-          return res.status(404).json({ error: 'Запись для оплаты не найдена' });
-        }
-
-        // Обновляем только если статус pending
-        const { error: updateError, data: updatedData } = await supabaseAdmin
-          .from('votes')
-          .update({ payment_id: payment.id })
-          .eq('user_id', userId)
-          .eq('game_id', gameId)
-          .eq('status', 'pending')
-          .select('*');
-
-        if (updateError) {
-          console.error('[create-payment] Ошибка обновления голоса в базе данных:', updateError);
-          return res.status(500).json({ error: 'Ошибка обновления записи в БД' });
-        }
-
-        if (!updatedData || updatedData.length === 0) {
-          console.warn('[create-payment] Не удалось обновить запись — возможно, статус не "pending":', { userId, gameId });
-          return res.status(400).json({ error: 'Невозможно обновить запись: статус не позволяет' });
-        }
+      if (paymentInsertError) {
+        console.error('[create-payment] Ошибка сохранения платежа в БД:', paymentInsertError);
       }
-    } catch (e: any) {
-      console.error('[create-payment] Исключение при обновлении голоса:', e.message || e);
-      return res.status(500).json({ error: 'Ошибка при привязке платежа к записи' });
     }
 
-    // === Успешный ответ клиенту ===
+    // Ответ клиенту
     return res.status(200).json({
-      paymentId: payment.id,
-      status: payment.status,
-      paid: payment.paid,
+      paymentId: yookassaPayment.id,
+      status: yookassaPayment.status,
+      paid: yookassaPayment.paid,
       confirmationUrl,
-      confirmation_url: confirmationUrl,
     });
 
   } catch (error: any) {
-    console.error('[create-payment] Внутренняя ошибка сервера:', error);
-    return res.status(500).json({
-      error: 'Внутренняя ошибка сервера при создании платежа',
-      детали: error.message || 'Неизвестная ошибка'
-    });
+    console.error('[create-payment] Внутренняя ошибка:', error);
+    return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
   }
 });
 
 // POST /api/yookassa/webhook — прописывается в настройках ЮKassa
 router.post('/yookassa/webhook', async (req, res) => {
   try {
-    // Проверка авторизации через Basic Auth, если указаны логин и пароль
     const webhookLogin = process.env.YOOKASSA_WEBHOOK_LOGIN;
     const webhookPassword = process.env.YOOKASSA_WEBHOOK_PASSWORD;
 
@@ -167,132 +155,115 @@ router.post('/yookassa/webhook', async (req, res) => {
       const expectedAuth = 'Basic ' + Buffer.from(`${webhookLogin}:${webhookPassword}`).toString('base64');
 
       if (!authHeader || authHeader !== expectedAuth) {
-        console.warn('[webhook] Ошибка авторизации: неверные учетные данные');
         return res.status(401).json({ error: 'Неавторизованный доступ' });
       }
     }
 
-    const shopId = process.env.YOOKASSA_SHOP_ID;
-    const secretKey = process.env.YOOKASSA_SECRET_KEY;
-
-    if (!shopId || !secretKey) {
-      console.error('[webhook] YooKassa не настроена: отсутствуют shop_id или секретный ключ');
-      return res.status(500).json({ error: 'Сервис оплаты временно недоступен' });
-    }
-
-    const event = (req.body?.event || req.body?.notification_type) as string | undefined;
     const payment = req.body?.object || req.body?.payment || req.body;
     const paymentId = payment?.id as string | undefined;
-    const metadata = payment?.metadata || {};
 
-    // Если нет ID платежа — просто подтверждаем приём
     if (!paymentId) {
-      console.log('[webhook] Платёж не содержит ID, пропускаем:', req.body);
+      console.log('[webhook] Нет payment_id, пропускаем:', req.body);
       return res.status(200).json({ received: true });
     }
 
-    // Обработка успешного платежа
-    if (
-      event === 'payment.succeeded' ||
-      payment?.status === 'succeeded' ||
-      payment?.paid === true
-    ) {
-      const updatePayload = {
-        status: 'confirmed',
-        payment_verified: true,
-        paid_at: new Date().toISOString(),
-        payment_id: paymentId,
-      };
+    // Извлекаем данные платежа
+    const status = payment.status;
+    const amountValue = parseFloat(payment.amount?.value || '0');
+    const currency = payment.amount?.currency || 'RUB';
+    const metadata = payment?.metadata || {};
+    const voteIdFromMeta = metadata.vote_id;
 
-      // Сначала пробуем обновить по payment_id
-      const { error: byPaymentError, data: byPaymentData } = await supabaseAdmin
-        .from('votes')
-        .update(updatePayload)
-        .eq('payment_id', paymentId)
-        .eq('status', 'pending')
-        .select('*');
+    // Определяем vote_id
+    let voteId: string | null = null;
 
-      if (byPaymentError) {
-        console.error('[webhook succeeded] Ошибка обновления голоса по payment_id:', byPaymentError);
-      }
+    if (voteIdFromMeta) {
+      voteId = String(voteIdFromMeta);
+    } else {
+      const { data: existingPayment } = await supabaseAdmin
+        .from('payments')
+        .select('vote_id')
+        .eq('id', paymentId)
+        .maybeSingle();
 
-      // Если не нашли по payment_id, но есть metadata — пробуем по user_id и game_id
-      if (!byPaymentData?.length && metadata?.userId && metadata?.gameId) {
-        const userId = String(metadata.userId);
-        const gameId = String(metadata.gameId);
-
-        const { error: byUserGameError, data: byUserGameData } = await supabaseAdmin
-          .from('votes')
-          .update(updatePayload)
-          .eq('user_id', userId)
-          .eq('game_id', gameId)
-          .in('status', ['pending', 'confirmed'])
-          .select('*');
-
-        if (byUserGameError) {
-          console.error('[webhook succeeded] Ошибка обновления голоса по user_id и game_id:', byUserGameError);
-        }
-
-        if (!byUserGameData?.length) {
-          console.warn('[webhook succeeded] Не удалось обновить ни одну запись голосования:', {
-            paymentId,
-            metadata,
-          });
-        }
+      if (existingPayment?.vote_id) {
+        voteId = String(existingPayment.vote_id);
       }
     }
 
-    // Обработка отменённого платежа
-    if (event === 'payment.canceled' || payment?.status === 'canceled') {
-      const updatePayload = {
-        status: 'failed',
-        payment_verified: false,
-        payment_id: paymentId,
-      };
+    // Извлечение payment_method и card_last4
+    const pm = payment.payment_method;
+    let paymentMethodType: string | null = null;
+    let cardLast4: string | null = null;
 
-      // Обновляем по payment_id
-      const { error: byPaymentError, data: byPaymentData } = await supabaseAdmin
-        .from('votes')
-        .update(updatePayload)
-        .eq('payment_id', paymentId)
-        .in('status', ['pending'])
-        .select('*');
+    if (pm) {
+      paymentMethodType = pm.type;
 
-      if (byPaymentError) {
-        console.error('[webhook canceled] Ошибка обновления голоса по payment_id:', byPaymentError);
+      // Если это карта — извлекаем последние 4 цифры
+      if (pm.type === 'card' && pm.card?.number_masked) {
+        const last4Match = pm.card.number_masked.match(/\d{4}$/);
+        if (last4Match) {
+          cardLast4 = last4Match[0];
+        }
       }
+      else if (pm.type === 'apple_pay' || pm.type === 'google_pay') {
+        cardLast4 = null;
+      }
+    }
 
-      // Если не нашли - пробуем по user_id и game_id
-      if (!byPaymentData?.length && metadata?.userId && metadata?.gameId) {
-        const userId = String(metadata.userId);
-        const gameId = String(metadata.gameId);
+    // Обработка события
+    if (status === 'succeeded') {
+      const { error } = await supabaseAdmin.from('payments').upsert(
+        {
+          id: paymentId,
+          vote_id: voteId,
+          amount: amountValue,
+          currency,
+          status: 'succeeded',
+          payment_method: paymentMethodType,
+          card_last4: cardLast4,
+          paid_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'id' }
+      );
 
-        const { error: byUserGameError, data: byUserGameData } = await supabaseAdmin
-          .from('votes')
-          .update(updatePayload)
-          .eq('user_id', userId)
-          .eq('game_id', gameId)
-          .in('status', ['pending'])
-          .select('*');
+      if (error) {
+        console.error('[webhook] Ошибка обновления payments (succeeded):', error);
+      }
+    }
 
-        if (byUserGameError) {
-          console.error('[webhook canceled] Ошибка обновления голоса по user_id и game_id:', byUserGameError);
-        }
+    if (status === 'canceled') {
+      const reasonCode = payment.cancellation_details?.reason || 'unknown';
+      const userMessage =
+        CANCELLATION_REASONS[reasonCode as keyof typeof CANCELLATION_REASONS] || CANCELLATION_REASONS.unknown;
 
-        if (!byUserGameData?.length) {
-          console.warn('[webhook canceled] Не удалось обновить ни одну запись голосования:', {
-            paymentId,
-            metadata,
-          });
-        }
+      const { error } = await supabaseAdmin.from('payments').upsert(
+        {
+          id: paymentId,
+          vote_id: voteId,
+          amount: amountValue,
+          currency,
+          status: 'canceled',
+          payment_method: paymentMethodType,
+          card_last4: cardLast4,
+          canceled_at: new Date().toISOString(),
+          cancellation_reason_code: reasonCode,
+          cancellation_reason_message: userMessage,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'id' }
+      );
+
+      if (error) {
+        console.error('[webhook] Ошибка обновления payments (canceled):', error);
       }
     }
 
     return res.status(200).json({ received: true });
 
   } catch (error) {
-    console.error('[webhook] Внутренняя ошибка сервера при обработке вебхука:', error);
-    // Всегда возвращаем 200, чтобы ЮKassa не повторяла запрос
+    console.error('[webhook] Ошибка:', error);
     return res.status(200).json({ received: true });
   }
 });
@@ -415,7 +386,6 @@ router.post('/refund-payment', async (req, res) => {
       idempotencyKey,
     });
 
-    
     const shopId = process.env.YOOKASSA_SHOP_ID;
     const secretKey = process.env.YOOKASSA_SECRET_KEY;
 
@@ -450,7 +420,29 @@ router.post('/refund-payment', async (req, res) => {
     const refund = await response.json();
     console.log('[refund-payment] Возврат успешно создан:', refund);
 
-    // Обновление статуса голосования в Supabase (если есть метаданные)
+    // === 🔁 Обновляем таблицу payments ===
+    try {
+      const refundAmount = parseFloat(refund.amount.value);
+      const { error: paymentUpdateError } = await supabaseAdmin
+        .from('payments')
+        .update({
+          refunded_amount: refundAmount,
+          refunded_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', normalizedPaymentId);
+
+      if (paymentUpdateError) {
+        console.error('[refund-payment] Ошибка обновления записи в таблице payments:', paymentUpdateError);
+        // Не фатально, но важно зафиксировать
+      } else {
+        console.log(`[refund-payment] Таблица payments обновлена: возвращено ${refundAmount} RUB`);
+      }
+    } catch (updateError) {
+      console.error('[refund-payment] Исключение при обновлении payments:', updateError);
+    }
+
+    // === Обновление статуса голосования в Supabase (если есть метаданные) ===
     try {
       const metadata = payment.metadata || {};
       const userIdStr = metadata.userId;
