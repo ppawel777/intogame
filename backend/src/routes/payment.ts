@@ -58,13 +58,17 @@ router.post('/create-payment', async (req, res) => {
 
     // Поиск голосования (если есть metadata)
     let voteId: string | null = null;
+    let quantity: number = 1;
+    let gameId: string | null = null;
+    let userId: string | null = null;
+
     if (metadata?.userId && metadata?.gameId) {
-      const userId = String(metadata.userId);
-      const gameId = String(metadata.gameId);
+      userId = String(metadata.userId);
+      gameId = String(metadata.gameId);
 
       const { data: voteData, error } = await supabaseAdmin
         .from('votes')
-        .select('id')
+        .select('id, quantity, game_id, user_id')
         .eq('user_id', userId)
         .eq('game_id', gameId)
         .eq('status', 'pending')
@@ -75,14 +79,53 @@ router.post('/create-payment', async (req, res) => {
       }
 
       if (!voteData) {
-        logger.warn('Голос не найден или уже не pending:', { userId, gameId });
-        return res.status(404).json({ 
-          error: 'Запись для оплаты не найдена', 
-          details: 'Срок бронирования истёк. Пожалуйста, запишитесь на игру снова.' 
+        logger.warn('Голос не найден или не в статусе pending:', { userId, gameId });
+        return res.status(404).json({
+          error: 'Запись для оплаты не найдена',
+          details: 'Срок бронирования истёк. Пожалуйста, запишитесь на игру снова.',
         });
       }
 
-      voteId = String(voteData.id);
+      voteId = String(voteData.id)
+      quantity = voteData.quantity || 1;
+      gameId = voteData.game_id;
+      userId = voteData.user_id;
+    }
+
+    if (!voteId) {
+      return res.status(400).json({ error: 'Не удалось определить запись для оплаты' });
+    }
+
+    // Получаем цену игры и рассчитываем взнос
+    const { data: game, error: gameError } = await supabaseAdmin
+      .from('games')
+      .select('game_price, players_limit')
+      .eq('id', gameId)
+      .single();
+
+    if (gameError || !game) {
+      logger.error('Не удалось получить данные игры:', gameError);
+      return res.status(500).json({ error: 'Не удалось получить данные игры' });
+    }
+
+    const totalGamePrice = game.game_price || 0;
+    const playersLimit = game.players_limit || 1;
+    const pricePerPlayer = Math.ceil(totalGamePrice / playersLimit);
+    const expectedAmount = pricePerPlayer * quantity;
+
+    // Проверка соответствия суммы
+    const tolerance = 0.01;
+    if (Math.abs(numericAmount - expectedAmount) > tolerance) {
+      logger.warn('Сумма не соответствует расчёту:', {
+        received: numericAmount,
+        expected: expectedAmount,
+        pricePerPlayer,
+        quantity,
+      });
+      return res.status(400).json({
+        error: 'Неверная сумма платежа',
+        details: `Ожидалось ${expectedAmount} ₽ за ${quantity} мест (${pricePerPlayer} ₽/место).`,
+      });
     }
 
     // Создание платежа в YooKassa
@@ -102,7 +145,7 @@ router.post('/create-payment', async (req, res) => {
         randomUUID()
       );
     } catch (err: any) {
-      logger.error('Ошибка создания платежа:', err?.response?.data || err.message);
+      logger.error('Ошибка создания платежа в YooKassa:', err?.response?.data || err.message);
       return res.status(502).json({
         error: 'Не удалось создать платёж',
         детали: err?.response?.data || err.message,
@@ -116,30 +159,31 @@ router.post('/create-payment', async (req, res) => {
 
     // Сохраняем платёж в таблицу payments
     if (voteId) {
-      const { error: paymentInsertError } = await supabaseAdmin.from('payments').insert({
-        id: yookassaPayment.id,
-        vote_id: voteId,
-        amount: numericAmount,
-        currency: 'RUB',
-        status: yookassaPayment.status,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      });
+    const { error: paymentInsertError } = await supabaseAdmin.from('payments').insert({
+      id: yookassaPayment.id,
+      vote_id: voteId,
+      amount: numericAmount,
+      currency: 'RUB',
+      status: yookassaPayment.status,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
 
-      if (paymentInsertError) {
-        logger.error('Ошибка сохранения платежа в БД:', paymentInsertError,voteId);
-      }
+    if (paymentInsertError) {
+      logger.error('Ошибка сохранения платежа в БД:', paymentInsertError);
     }
-
+  }
     return res.status(200).json({
       paymentId: yookassaPayment.id,
       status: yookassaPayment.status,
       paid: yookassaPayment.paid,
       confirmationUrl,
+      quantity,
+      pricePerPlayer,
     });
 
   } catch (error: any) {
-    logger.error('Внутренняя ошибка:', error);
+    logger.error('Внутренняя ошибка', error);
     return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
   }
 });
@@ -278,7 +322,7 @@ const parseAmountValue = (val: string | number | undefined): number => {
   return NaN;
 };
 
-// POST /api/refund-payment { paymentId, amount }
+// POST /api/refund-payment
 router.post('/refund-payment', async (req, res) => {
   const logger = createLogger('refund-payment');
   try {
@@ -296,108 +340,68 @@ router.post('/refund-payment', async (req, res) => {
       return res.status(400).json({ error: 'Требуется идентификатор платежа' });
     }
 
-    // Получаем платёж из YooKassa API
-    let payment;
+    // Получаем платёж из YooKassa
+    let yookassaPayment;
     try {
-      payment = await getClient().getPayment(normalizedPaymentId);
+      yookassaPayment = await getClient().getPayment(normalizedPaymentId);
     } catch (err: any) {
-      logger.error(
-        'Не удалось получить платёж из YooKassa:',
-        err?.response?.data || err.message || err
-      );
+      logger.error('Ошибка получения платежа из YooKassa:', err?.response?.data || err.message);
       return res.status(404).json({
         error: 'Платёж не найден',
-        details: err?.response?.data ? JSON.stringify(err.response.data) : 'Ошибка соединения с платёжной системой'
+        детали: err?.response?.data || 'Ошибка соединения с платёжной системой',
       });
     }
 
-    const paid = payment.paid;
-    const status = payment.status;
+    const { paid, status } = yookassaPayment;
 
     if (!paid || status !== 'succeeded') {
       logger.warn(`Платёж не подлежит возврату: статус=${status}, оплачен=${paid}`);
       return res.status(400).json({
         error: 'Данный платёж нельзя вернуть',
-        details: `Текущий статус: ${status}, оплачен: ${paid}`
+        детали: `Текущий статус: ${status}, оплачен: ${paid}`,
       });
     }
 
-    // Определяем сумму, доступную для возврата
-    const rawRefundable = payment.refundable_amount?.value;
-    const rawTotal = payment.amount.value;
+    // Проверка доступной суммы для возврата
+    const refundableStr = yookassaPayment.refundable_amount?.value;
+    const refundableNumeric = parseAmountValue(refundableStr);
+    const refundableMax = Number.isFinite(refundableNumeric) ? refundableNumeric : 0;
 
-    const refundableNumeric = parseAmountValue(rawRefundable);
-    const totalNumeric = parseAmountValue(rawTotal);
-
-    const refundableMax = Number.isFinite(refundableNumeric) ? refundableNumeric : totalNumeric;
-
-    if (!Number.isFinite(refundableMax) || refundableMax <= 0) {
+    if (refundableMax <= 0) {
       logger.warn('Нет средств для возврата:', { refundableMax });
       return res.status(400).json({ error: 'Нет средств для возврата' });
     }
 
-    // Проверка запрашиваемой суммы
+    // Определяем сумму возврата
     let valueToRefund = refundableMax;
 
     if (amount !== undefined && amount !== null && amount !== '') {
-      const requestedStr = typeof amount === 'string' ? amount.trim() : String(amount);
-      if (!requestedStr) {
-        logger.warn('Передана пустая или некорректная строка суммы:', { amount });
-        return res.status(400).json({ error: 'Неверный формат суммы' });
-      }
-
-      const requested = parseAmountValue(requestedStr);
+      const requested = parseAmountValue(amount);
       if (!Number.isFinite(requested) || requested <= 0) {
-        logger.warn('Сумма возврата должна быть положительным числом:', { requested });
         return res.status(400).json({ error: 'Сумма должна быть положительным числом' });
       }
-
       if (requested > refundableMax) {
-        logger.warn('Запрошенная сумма превышает допустимую:', {
-          requested,
-          refundableMax,
-        });
         return res.status(400).json({
           error: 'Запрошенная сумма превышает доступную для возврата',
           максимальная_сумма: refundableMax,
-          запрошено: requested
+          запрошено: requested,
         });
       }
-
       valueToRefund = requested;
     }
 
-    // Форматируем сумму как строку с двумя знаками после запятой
     const formattedAmount = valueToRefund.toFixed(2);
-
-    // Подготовка данных для запроса
-    const payload = {
-      payment_id: normalizedPaymentId,
-      amount: {
-        value: formattedAmount,
-        currency: 'RUB' as const,
-      },
-    };
-
     const idempotencyKey = randomUUID();
 
-    logger.log('Отправка запроса на возврат:', {
-      payment_id: normalizedPaymentId,
-      сумма: formattedAmount,
-      idempotencyKey,
-    });
+    logger.log('Создание возврата:', { paymentId: normalizedPaymentId, amount: formattedAmount });
 
-    const shopId = process.env.YOOKASSA_SHOP_ID;
-    const secretKey = process.env.YOOKASSA_SECRET_KEY;
-
+    const { shopId, secretKey } = getConfig();
     if (!shopId || !secretKey) {
-      logger.error('Не настроены учетные данные YooKassa');
       return res.status(500).json({ error: 'Сервис оплаты временно недоступен' });
     }
 
     const auth = Buffer.from(`${shopId}:${secretKey}`).toString('base64');
 
-    // Вызов YooKassa API напрямую
     const response = await fetch('https://api.yookassa.ru/v3/refunds', {
       method: 'POST',
       headers: {
@@ -405,76 +409,39 @@ router.post('/refund-payment', async (req, res) => {
         'Idempotence-Key': idempotencyKey,
         'Authorization': `Basic ${auth}`,
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        payment_id: normalizedPaymentId,
+        amount: { value: formattedAmount, currency: 'RUB' },
+      }),
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Не удалось расшифровать ошибку ответа' }));
-      logger.error('Ошибка от YooKassa при создании возврата:', errorData);
+      const errorData = await response.json().catch(() => ({ message: 'Не удалось расшифровать ответ' }));
+      logger.error('Ошибка от YooKassa при возврате:', errorData);
       return res.status(response.status).json({
-        error: 'Не удалось выполнить возврат средств',
+        error: 'Не удалось выполнить возврат',
         детали: errorData,
-        статус: response.status,
       });
     }
 
     const refund = await response.json();
-    logger.log('Возврат успешно создан:', refund);
 
-    // Обновляем таблицу payments
-    try {
-      const refundAmount = parseFloat(refund.amount.value);
-      const { error: paymentUpdateError } = await supabaseAdmin
-        .from('payments')
-        .update({
-          refunded_amount: refundAmount,
-          refunded_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          status: 'canceled'
-        })
-        .eq('id', normalizedPaymentId);
+    // Обновляем запись в payments
+    const { error: updateError } = await supabaseAdmin
+      .from('payments')
+      .update({
+        refunded_amount: parseFloat(refund.amount.value),
+        refunded_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        status: 'canceled',
+      })
+      .eq('id', normalizedPaymentId);
 
-      if (paymentUpdateError) {
-        logger.error('Ошибка обновления записи в таблице payments:', paymentUpdateError);
-      }
-    } catch (updateError) {
-      logger.error('Ошибка при обновлении payments:', updateError);
+    if (updateError) {
+      logger.error('Ошибка обновления payments после возврата:', updateError);
     }
 
-    // Обновление статуса голосования в Supabase (если есть метаданные)
-    // try {
-    //   const metadata = payment.metadata || {};
-    //   const userIdStr = metadata.userId;
-    //   const gameIdStr = metadata.gameId;
-
-    //   if (userIdStr && gameIdStr) {
-    //     const userId = Number(userIdStr);
-    //     const gameId = Number(gameIdStr);
-
-    //     if (!isNaN(userId) && !isNaN(gameId)) {
-    //       const { error } = await supabaseAdmin
-    //         .from('votes')
-    //         .update({
-    //           status: 'cancelled',
-    //         })
-    //         .eq('user_id', String(userId))
-    //         .eq('game_id', String(gameId))
-    //         .eq('status', 'confirmed');
-
-    //       if (error) {
-    //         console.error('[refund-payment] Ошибка обновления голоса в базе данных:', error);
-    //       } else {
-    //         console.log(`[refund-payment] Голос обновлён: user_id=${userId}, game_id=${gameId}`);
-    //       }
-    //     } else {
-    //       console.warn('[refund-payment] Некорректный userId или gameId после преобразования:', { userIdStr, gameIdStr });
-    //     }
-    //   } else {
-    //     console.log('[refund-payment] В платеже отсутствуют userId или gameId в метаданных');
-    //   }
-    // } catch (e) {
-    //   console.warn('[refund-payment] Произошла ошибка при обновлении голоса:', e);
-    // }
+    // Триггер в БД сам обновит votes.status
 
     return res.status(200).json({
       success: true,
@@ -482,10 +449,10 @@ router.post('/refund-payment', async (req, res) => {
     });
 
   } catch (error: any) {
-    logger.error('Внутренняя ошибка сервера:', error);
+    logger.error('Ошибка при возврате:', error);
     return res.status(500).json({
-      error: 'Внутренняя ошибка сервера при выполнении возврата',
-      детали: error.message || 'Неизвестная ошибка'
+      error: 'Внутренняя ошибка сервера',
+      детали: error.message,
     });
   }
 });

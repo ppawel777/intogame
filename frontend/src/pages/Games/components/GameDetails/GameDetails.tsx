@@ -49,7 +49,7 @@ export const GameDetails = ({ game }: GameDetailsProps) => {
                         Подтверждение оплаты: {reserved_count}
                      </span>
                   </div>
-                  {votes_count > 0 && (
+                  {(votes_count > 0 || reserved_count > 0) && (
                      <Button size="small" onClick={() => openUsersDrawer(id)}>
                         Список
                      </Button>
