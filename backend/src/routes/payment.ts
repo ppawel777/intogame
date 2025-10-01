@@ -5,6 +5,8 @@ import { supabaseAdmin } from '../lib/supabase';
 import { randomUUID } from 'crypto';
 import dotenv from 'dotenv';
 import { CANCELLATION_REASONS } from './utils/payment_utils';
+import { createLogger } from './utils/logger';
+
 dotenv.config();
 
 const router = express.Router();
@@ -23,11 +25,12 @@ const getClient = () => {
 
 // POST /api/create-payment
 router.post('/create-payment', async (req, res) => {
+  const logger = createLogger('create-payment');
   try {
     const { shopId, secretKey, frontendUrl } = getConfig();
 
     if (!shopId || !secretKey) {
-      console.error('[create-payment] Не настроены учетные данные YooKassa');
+      logger.error('Не настроены учетные данные YooKassa');
       return res.status(500).json({ error: 'Сервис оплаты временно недоступен' });
     }
 
@@ -40,7 +43,7 @@ router.post('/create-payment', async (req, res) => {
 
     // Проверка суммы
     if (!amount || Number.isNaN(Number(amount))) {
-      console.warn('[create-payment] Передана некорректная сумма:', { amount });
+      logger.warn('Передана некорректная сумма:', { amount });
       return res.status(400).json({ error: 'Указана некорректная сумма' });
     }
 
@@ -68,12 +71,11 @@ router.post('/create-payment', async (req, res) => {
         .maybeSingle();
 
       if (error) {
-        console.error('[create-payment] Ошибка поиска голоса:', error);
         return res.status(500).json({ error: 'Ошибка при поиске голоса' });
       }
 
       if (!voteData) {
-        console.warn('[create-payment] Голос не найден или уже не pending:', { userId, gameId });
+        logger.warn('Голос не найден или уже не pending:', { userId, gameId });
         return res.status(404).json({ 
           error: 'Запись для оплаты не найдена', 
           details: 'Срок бронирования истёк. Пожалуйста, запишитесь на игру снова.' 
@@ -100,7 +102,7 @@ router.post('/create-payment', async (req, res) => {
         randomUUID()
       );
     } catch (err: any) {
-      console.error('[create-payment] Ошибка создания платежа:', err?.response?.data || err.message);
+      logger.error('Ошибка создания платежа:', err?.response?.data || err.message);
       return res.status(502).json({
         error: 'Не удалось создать платёж',
         детали: err?.response?.data || err.message,
@@ -109,7 +111,6 @@ router.post('/create-payment', async (req, res) => {
 
     const confirmationUrl = yookassaPayment?.confirmation?.confirmation_url;
     if (!confirmationUrl) {
-      console.error('[create-payment] Нет confirmation_url:', yookassaPayment);
       return res.status(502).json({ error: 'Не удалось получить ссылку для оплаты' });
     }
 
@@ -126,11 +127,10 @@ router.post('/create-payment', async (req, res) => {
       });
 
       if (paymentInsertError) {
-        console.error('[create-payment] Ошибка сохранения платежа в БД:', paymentInsertError);
+        logger.error('Ошибка сохранения платежа в БД:', paymentInsertError,voteId);
       }
     }
 
-    // Ответ клиенту
     return res.status(200).json({
       paymentId: yookassaPayment.id,
       status: yookassaPayment.status,
@@ -139,13 +139,14 @@ router.post('/create-payment', async (req, res) => {
     });
 
   } catch (error: any) {
-    console.error('[create-payment] Внутренняя ошибка:', error);
+    logger.error('Внутренняя ошибка:', error);
     return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
   }
 });
 
 // POST /api/yookassa/webhook — прописывается в настройках ЮKassa
 router.post('/yookassa/webhook', async (req, res) => {
+  const logger = createLogger('webhook');
   try {
     const webhookLogin = process.env.YOOKASSA_WEBHOOK_LOGIN;
     const webhookPassword = process.env.YOOKASSA_WEBHOOK_PASSWORD;
@@ -163,7 +164,6 @@ router.post('/yookassa/webhook', async (req, res) => {
     const paymentId = payment?.id as string | undefined;
 
     if (!paymentId) {
-      console.log('[webhook] Нет payment_id, пропускаем:', req.body);
       return res.status(200).json({ received: true });
     }
 
@@ -229,7 +229,7 @@ router.post('/yookassa/webhook', async (req, res) => {
       );
 
       if (error) {
-        console.error('[webhook] Ошибка обновления payments (succeeded):', error);
+        logger.error('Ошибка обновления payments (succeeded):', error);
       }
     }
 
@@ -256,14 +256,14 @@ router.post('/yookassa/webhook', async (req, res) => {
       );
 
       if (error) {
-        console.error('[webhook] Ошибка обновления payments (canceled):', error);
+        logger.error('Ошибка обновления payments (canceled):', error);
       }
     }
 
     return res.status(200).json({ received: true });
 
   } catch (error) {
-    console.error('[webhook] Ошибка:', error);
+    logger.error('Внутренняя ошибка:', error);
     return res.status(200).json({ received: true });
   }
 });
@@ -280,6 +280,7 @@ const parseAmountValue = (val: string | number | undefined): number => {
 
 // POST /api/refund-payment { paymentId, amount }
 router.post('/refund-payment', async (req, res) => {
+  const logger = createLogger('refund-payment');
   try {
     const { paymentId, amount } = req.body || {};
 
@@ -291,7 +292,7 @@ router.post('/refund-payment', async (req, res) => {
           : undefined;
 
     if (!normalizedPaymentId) {
-      console.warn('[refund-payment] Не указан paymentId или он имеет неверный формат');
+      logger.error('Не указан paymentId или он имеет неверный формат');
       return res.status(400).json({ error: 'Требуется идентификатор платежа' });
     }
 
@@ -300,8 +301,8 @@ router.post('/refund-payment', async (req, res) => {
     try {
       payment = await getClient().getPayment(normalizedPaymentId);
     } catch (err: any) {
-      console.error(
-        '[refund-payment] Не удалось получить платёж из YooKassa:',
+      logger.error(
+        'Не удалось получить платёж из YooKassa:',
         err?.response?.data || err.message || err
       );
       return res.status(404).json({
@@ -314,7 +315,7 @@ router.post('/refund-payment', async (req, res) => {
     const status = payment.status;
 
     if (!paid || status !== 'succeeded') {
-      console.warn(`[refund-payment] Платёж не подлежит возврату: статус=${status}, оплачен=${paid}`);
+      logger.warn(`Платёж не подлежит возврату: статус=${status}, оплачен=${paid}`);
       return res.status(400).json({
         error: 'Данный платёж нельзя вернуть',
         details: `Текущий статус: ${status}, оплачен: ${paid}`
@@ -331,7 +332,7 @@ router.post('/refund-payment', async (req, res) => {
     const refundableMax = Number.isFinite(refundableNumeric) ? refundableNumeric : totalNumeric;
 
     if (!Number.isFinite(refundableMax) || refundableMax <= 0) {
-      console.warn('[refund-payment] Нет средств для возврата:', { refundableMax });
+      logger.warn('Нет средств для возврата:', { refundableMax });
       return res.status(400).json({ error: 'Нет средств для возврата' });
     }
 
@@ -341,18 +342,18 @@ router.post('/refund-payment', async (req, res) => {
     if (amount !== undefined && amount !== null && amount !== '') {
       const requestedStr = typeof amount === 'string' ? amount.trim() : String(amount);
       if (!requestedStr) {
-        console.warn('[refund-payment] Передана пустая или некорректная строка суммы:', { amount });
+        logger.warn('Передана пустая или некорректная строка суммы:', { amount });
         return res.status(400).json({ error: 'Неверный формат суммы' });
       }
 
       const requested = parseAmountValue(requestedStr);
       if (!Number.isFinite(requested) || requested <= 0) {
-        console.warn('[refund-payment] Сумма возврата должна быть положительным числом:', { requested });
+        logger.warn('Сумма возврата должна быть положительным числом:', { requested });
         return res.status(400).json({ error: 'Сумма должна быть положительным числом' });
       }
 
       if (requested > refundableMax) {
-        console.warn('[refund-payment] Запрошенная сумма превышает допустимую:', {
+        logger.warn('Запрошенная сумма превышает допустимую:', {
           requested,
           refundableMax,
         });
@@ -380,7 +381,7 @@ router.post('/refund-payment', async (req, res) => {
 
     const idempotencyKey = randomUUID();
 
-    console.log('[refund-payment] Отправка запроса на возврат:', {
+    logger.log('Отправка запроса на возврат:', {
       payment_id: normalizedPaymentId,
       сумма: formattedAmount,
       idempotencyKey,
@@ -390,7 +391,7 @@ router.post('/refund-payment', async (req, res) => {
     const secretKey = process.env.YOOKASSA_SECRET_KEY;
 
     if (!shopId || !secretKey) {
-      console.error('[refund-payment] Не настроены учетные данные YooKassa');
+      logger.error('Не настроены учетные данные YooKassa');
       return res.status(500).json({ error: 'Сервис оплаты временно недоступен' });
     }
 
@@ -409,7 +410,7 @@ router.post('/refund-payment', async (req, res) => {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ message: 'Не удалось расшифровать ошибку ответа' }));
-      console.error('[refund-payment] Ошибка от YooKassa при создании возврата:', errorData);
+      logger.error('Ошибка от YooKassa при создании возврата:', errorData);
       return res.status(response.status).json({
         error: 'Не удалось выполнить возврат средств',
         детали: errorData,
@@ -418,9 +419,9 @@ router.post('/refund-payment', async (req, res) => {
     }
 
     const refund = await response.json();
-    console.log('[refund-payment] Возврат успешно создан:', refund);
+    logger.log('Возврат успешно создан:', refund);
 
-    // === 🔁 Обновляем таблицу payments ===
+    // Обновляем таблицу payments
     try {
       const refundAmount = parseFloat(refund.amount.value);
       const { error: paymentUpdateError } = await supabaseAdmin
@@ -429,54 +430,51 @@ router.post('/refund-payment', async (req, res) => {
           refunded_amount: refundAmount,
           refunded_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
+          status: 'canceled'
         })
         .eq('id', normalizedPaymentId);
 
       if (paymentUpdateError) {
-        console.error('[refund-payment] Ошибка обновления записи в таблице payments:', paymentUpdateError);
-        // Не фатально, но важно зафиксировать
-      } else {
-        console.log(`[refund-payment] Таблица payments обновлена: возвращено ${refundAmount} RUB`);
+        logger.error('Ошибка обновления записи в таблице payments:', paymentUpdateError);
       }
     } catch (updateError) {
-      console.error('[refund-payment] Исключение при обновлении payments:', updateError);
+      logger.error('Ошибка при обновлении payments:', updateError);
     }
 
-    // === Обновление статуса голосования в Supabase (если есть метаданные) ===
-    try {
-      const metadata = payment.metadata || {};
-      const userIdStr = metadata.userId;
-      const gameIdStr = metadata.gameId;
+    // Обновление статуса голосования в Supabase (если есть метаданные)
+    // try {
+    //   const metadata = payment.metadata || {};
+    //   const userIdStr = metadata.userId;
+    //   const gameIdStr = metadata.gameId;
 
-      if (userIdStr && gameIdStr) {
-        const userId = Number(userIdStr);
-        const gameId = Number(gameIdStr);
+    //   if (userIdStr && gameIdStr) {
+    //     const userId = Number(userIdStr);
+    //     const gameId = Number(gameIdStr);
 
-        if (!isNaN(userId) && !isNaN(gameId)) {
-          const { error } = await supabaseAdmin
-            .from('votes')
-            .update({
-              status: 'cancelled',
-              payment_verified: false,
-            })
-            .eq('user_id', String(userId))
-            .eq('game_id', String(gameId))
-            .eq('status', 'confirmed');
+    //     if (!isNaN(userId) && !isNaN(gameId)) {
+    //       const { error } = await supabaseAdmin
+    //         .from('votes')
+    //         .update({
+    //           status: 'cancelled',
+    //         })
+    //         .eq('user_id', String(userId))
+    //         .eq('game_id', String(gameId))
+    //         .eq('status', 'confirmed');
 
-          if (error) {
-            console.error('[refund-payment] Ошибка обновления голоса в базе данных:', error);
-          } else {
-            console.log(`[refund-payment] Голос обновлён: user_id=${userId}, game_id=${gameId}`);
-          }
-        } else {
-          console.warn('[refund-payment] Некорректный userId или gameId после преобразования:', { userIdStr, gameIdStr });
-        }
-      } else {
-        console.log('[refund-payment] В платеже отсутствуют userId или gameId в метаданных');
-      }
-    } catch (e) {
-      console.warn('[refund-payment] Произошла ошибка при обновлении голоса:', e);
-    }
+    //       if (error) {
+    //         console.error('[refund-payment] Ошибка обновления голоса в базе данных:', error);
+    //       } else {
+    //         console.log(`[refund-payment] Голос обновлён: user_id=${userId}, game_id=${gameId}`);
+    //       }
+    //     } else {
+    //       console.warn('[refund-payment] Некорректный userId или gameId после преобразования:', { userIdStr, gameIdStr });
+    //     }
+    //   } else {
+    //     console.log('[refund-payment] В платеже отсутствуют userId или gameId в метаданных');
+    //   }
+    // } catch (e) {
+    //   console.warn('[refund-payment] Произошла ошибка при обновлении голоса:', e);
+    // }
 
     return res.status(200).json({
       success: true,
@@ -484,7 +482,7 @@ router.post('/refund-payment', async (req, res) => {
     });
 
   } catch (error: any) {
-    console.error('[refund-payment] Внутренняя ошибка сервера:', error);
+    logger.error('Внутренняя ошибка сервера:', error);
     return res.status(500).json({
       error: 'Внутренняя ошибка сервера при выполнении возврата',
       детали: error.message || 'Неизвестная ошибка'
