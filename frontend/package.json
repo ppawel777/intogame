@@ -51,6 +51,7 @@
       "@ant-design/v5-patch-for-react-19": "^1.0.3",
       "@supabase/supabase-js": "^2.57.0",
       "antd": "^5.27.2",
+      "antd-img-crop": "^4.25.0",
       "axios": "^1.11.0",
       "react": "^19.1.1",
       "react-dom": "^19.1.1",

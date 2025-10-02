@@ -1,11 +1,26 @@
 import { memo, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Flex, Menu, MenuProps } from 'antd'
-// import { CarryOutOutlined, NumberOutlined, PlayCircleOutlined, QuestionCircleOutlined } from '@ant-design/icons'
+import { Drawer, Flex, Menu, MenuProps } from 'antd'
+import { MenuOutlined } from '@ant-design/icons'
 
 import AvatarProfile from './AvatarProfile'
 
 import s from './NaviateTop.module.scss'
+
+const useIsMobile = () => {
+   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+
+   useEffect(() => {
+      const handleResize = () => {
+         setIsMobile(window.innerWidth < 768)
+      }
+
+      window.addEventListener('resize', handleResize)
+      return () => window.removeEventListener('resize', handleResize)
+   }, [])
+
+   return isMobile
+}
 
 type MenuItem = Required<MenuProps>['items'][number]
 
@@ -56,6 +71,8 @@ const NaviateTop = () => {
    const navigate = useNavigate()
    const location = useLocation()
    const [current, setCurrent] = useState('games/reserved')
+   const [drawerVisible, setDrawerVisible] = useState(false)
+   const isMobile = useIsMobile()
 
    const menuKeys = items.map((item) => item?.key as string)
 
@@ -81,17 +98,37 @@ const NaviateTop = () => {
       const key = e.key
       setCurrent(key)
       navigate(`/${key}`)
+      if (isMobile) {
+         setDrawerVisible(false)
+      }
    }
+
+   const toggleDrawer = () => {
+      setDrawerVisible(!drawerVisible)
+   }
+
+   const renderMenu = () => (
+      <Menu
+         onClick={onClick}
+         selectedKeys={current ? [current] : []}
+         mode={isMobile ? 'vertical' : 'horizontal'}
+         items={items}
+         className={s.menu}
+      />
+   )
 
    return (
       <Flex justify="space-between" className={s.wrapNavigateTop} align="center">
-         <Menu
-            onClick={onClick}
-            selectedKeys={current ? [current] : []}
-            mode="horizontal"
-            items={items}
-            className={s.menu}
-         />
+         {isMobile ? (
+            <>
+               <MenuOutlined className={s.burgerIcon} onClick={toggleDrawer} />
+               <Drawer placement="left" onClose={toggleDrawer} open={drawerVisible} title="Меню" width={280}>
+                  {renderMenu()}
+               </Drawer>
+            </>
+         ) : (
+            renderMenu()
+         )}
          <AvatarProfile />
       </Flex>
    )

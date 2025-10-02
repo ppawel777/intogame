@@ -1,3 +1,50 @@
 .ProfileWrap {
    width: 100%;
+   padding: 16px;
+
+   :global {
+      .ant-form-item {
+         margin-bottom: 24px;
+      }
+
+      @media (max-width: 767px) {
+         .ant-form-item-label {
+            padding: 0 0 8px;
+            text-align: left;
+         }
+
+         .ant-form-item {
+            margin-bottom: 16px;
+         }
+
+         .ant-space {
+            justify-content: center;
+         }
+
+         .ant-statistic {
+            text-align: center;
+         }
+
+         .ant-form-item-control {
+            max-width: 100%;
+         }
+
+         .ant-input-number {
+            width: 100% !important;
+         }
+
+         .ant-picker {
+            width: 100% !important;
+         }
+
+         .ant-select {
+            width: 100% !important;
+         }
+
+         .ant-btn {
+            width: 100%;
+            margin-top: 16px;
+         }
+      }
+   }
 }

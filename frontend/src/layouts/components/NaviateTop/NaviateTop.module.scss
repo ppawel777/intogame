@@ -1,11 +1,45 @@
-.wrapNavigateTop { position: relative; }
+.wrapNavigateTop {
+   position: relative;
+   padding: 0 16px;
+}
+
 .menu {
    padding: 2px;
    width: 100%;
+
+   @media (max-width: 767px) {
+      background: none;
+      border: none;
+      
+      :global(.ant-menu-item) {
+         padding: 0 16px !important;
+         margin: 0 !important;
+      }
+   }
 }
+
 .avatar {
-   margin-right: 16px;
    position: absolute;
-   right: 6px;
    cursor: pointer;
+   top: 50%;
+   transform: translateY(-50%);
+
+   @media (min-width: 768px) {
+      margin-right: 16px;
+      right: 6px;
+   }
+
+   @media (max-width: 767px) {
+      right: 18px;
+      top: 8px;
+      transform: none;
+   }
+}
+
+.burgerIcon {
+   font-size: 24px;
+   cursor: pointer;
+   padding: 8px;
+   display: flex;
+   align-items: center;
 }

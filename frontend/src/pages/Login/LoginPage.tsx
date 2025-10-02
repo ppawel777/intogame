@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect, useState } from 'react'
-import { Button, Form, FormProps, Input, InputNumber, message } from 'antd'
+import { Button, Form, FormProps, Input, InputNumber, Modal, message } from 'antd'
 import { supabase } from '@supabaseDir/supabaseClient'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@context/providers/AuthProvider/AuthProvider'
@@ -15,13 +16,33 @@ const LoginPage = () => {
    const { signin } = useAuth()
 
    const [messageApi, contextHolder] = message.useMessage()
-
    const [form] = Form.useForm()
    const [isRegistering, setIsRegistering] = useState(false)
    const [loading, setLoading] = useState(false)
    const [submitTime, setSubmitTime] = useState<number | null>(null)
+   const [showForgotPassword, setShowForgotPassword] = useState<string | false>(false)
+   const [isResetModalOpen, setIsResetModalOpen] = useState(false)
+   const [resetEmail, setResetEmail] = useState('')
 
    const [honeypotName] = useState('custom_field_' + Math.random().toString(36).substr(2, 9))
+
+   // Проверка recovery-ссылки при загрузке
+   useEffect(() => {
+      const hash = window.location.hash.substring(1)
+      if (!hash) return
+
+      const params = new URLSearchParams(hash)
+      const type = params.get('type')
+      const email = params.get('email')
+
+      if (type === 'recovery') {
+         setResetEmail(email || '')
+         setIsResetModalOpen(true)
+
+         // Очищаем хеш, чтобы не открывать модалку при F5
+         window.history.replaceState(null, '', window.location.pathname + window.location.search)
+      }
+   }, [])
 
    useEffect(() => {
       setSubmitTime(Date.now())
@@ -31,7 +52,6 @@ const LoginPage = () => {
 
    const handleSignIn = (session: Session) => {
       const { access_token, refresh_token } = session
-
       signin(() => {
          set_cookie({ name: 'access_token', value: access_token })
          set_cookie({ name: 'refresh_token', value: refresh_token })
@@ -76,7 +96,48 @@ const LoginPage = () => {
          }
       } catch (error: any) {
          const localizedMessage = localizeSupabaseError(error.message)
+
+         if (error.status === 400 && error.message === 'Invalid login credentials') {
+            setShowForgotPassword(values.email)
+         } else {
+            setShowForgotPassword(false)
+         }
+
          messageApi.error(localizedMessage)
+      } finally {
+         setLoading(false)
+      }
+   }
+
+   const handleForgotPassword = async (email: string) => {
+      setLoading(true)
+      try {
+         const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: `${window.location.origin}${window.location.pathname}`, // останемся на /login, но с recovery hash
+         })
+
+         if (error) throw error
+
+         messageApi.success('Ссылка для восстановления отправлена. Перейдите по ней, чтобы установить новый пароль.')
+         setShowForgotPassword(false)
+      } catch (err: any) {
+         messageApi.error('Ошибка отправки: ' + err.message)
+      } finally {
+         setLoading(false)
+      }
+   }
+
+   const onFinishResetPassword = async (values: { password: string }) => {
+      setLoading(true)
+      try {
+         const { error } = await supabase.auth.updateUser({ password: values.password })
+         if (error) throw error
+
+         messageApi.success('Пароль успешно изменён')
+         setIsResetModalOpen(false)
+         form.resetFields(['password']) // очистим поле пароля
+      } catch (err: any) {
+         messageApi.error('Не удалось сменить пароль: ' + err.message)
       } finally {
          setLoading(false)
       }
@@ -119,6 +180,35 @@ const LoginPage = () => {
    return (
       <div className={s['wrap-login']}>
          {contextHolder}
+
+         {/* Модалка для смены пароля */}
+         <Modal
+            title="Установите новый пароль"
+            open={isResetModalOpen}
+            footer={null}
+            onCancel={() => setIsResetModalOpen(false)}
+            destroyOnClose
+         >
+            <Form layout="vertical" onFinish={onFinishResetPassword} disabled={loading}>
+               <Form.Item
+                  label="Новый пароль"
+                  name="password"
+                  rules={[
+                     { required: true, message: 'Введите пароль' },
+                     { min: 6, message: 'Пароль должен быть не менее 6 символов' },
+                  ]}
+               >
+                  <Input.Password placeholder="••••••" />
+               </Form.Item>
+
+               <Form.Item>
+                  <Button type="primary" htmlType="submit" block loading={loading}>
+                     Сменить пароль
+                  </Button>
+               </Form.Item>
+            </Form>
+         </Modal>
+
          <div className={s['wrap-login__block']}>
             <div className={s['wrap-login__block-header']}>
                <h2>{isRegistering ? 'Регистрация' : 'Вход'}</h2>
@@ -144,6 +234,7 @@ const LoginPage = () => {
                   >
                      <Input.Password size="large" placeholder="Пароль" minLength={6} />
                   </Form.Item>
+
                   <Form.Item noStyle name={honeypotName}>
                      <Input type="text" autoComplete="off" style={{ display: 'none' }} />
                   </Form.Item>
@@ -192,6 +283,20 @@ const LoginPage = () => {
                            />
                         </Form.Item>
                      </>
+                  )}
+
+                  {/* Кнопка "Восстановить пароль" */}
+                  {showForgotPassword && (
+                     <Form.Item wrapperCol={{ ...layout.wrapperCol }} label=" ">
+                        <Button
+                           type="link"
+                           style={{ padding: 0, height: 'auto', fontSize: '14px' }}
+                           onClick={() => handleForgotPassword(showForgotPassword)}
+                           disabled={loading}
+                        >
+                           Восстановить пароль
+                        </Button>
+                     </Form.Item>
                   )}
 
                   <Form.Item wrapperCol={{ ...layout.wrapperCol }} label=" ">

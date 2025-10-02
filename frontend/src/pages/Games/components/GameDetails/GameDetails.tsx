@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, Descriptions, Flex, Tooltip, Typography } from 'antd'
+import { Button, Descriptions, Flex, Progress, Tooltip, Typography } from 'antd'
 import dayjs from 'dayjs'
 
 import { GameType } from '@typesDir/gameTypes'
@@ -26,6 +26,7 @@ export const GameDetails = ({ game }: GameDetailsProps) => {
       reserved_count,
    } = game
 
+   console.log(game)
    const [drawerUsers, setDrawerUsers] = useState({ open: false, id: 0 })
 
    const [start, end] = game_time || ['', '']
@@ -56,7 +57,6 @@ export const GameDetails = ({ game }: GameDetailsProps) => {
 
             <Descriptions.Item label="Лимит игроков">{players_limit}</Descriptions.Item>
 
-            {/* Участники — адаптивный блок */}
             <Descriptions.Item label="Участников">
                <Flex
                   vertical={isMobile}
@@ -65,10 +65,24 @@ export const GameDetails = ({ game }: GameDetailsProps) => {
                   gap={isMobile ? 4 : 12}
                   style={{ width: '100%' }}
                >
-                  <div>
-                     <span>
+                  <div style={{ width: '100%' }}>
+                     {/* <Flex vertical gap={4} style={{ width: '100%' }}> */}
+                     {/* <span>
                         В игре: <strong>{confirmed_count}</strong>
-                     </span>
+                     </span> */}
+                     <Progress
+                        percent={players_limit ? Math.round((confirmed_count / players_limit) * 100) : 0}
+                        size="small"
+                        status={players_limit && confirmed_count >= players_limit ? 'success' : 'active'}
+                        strokeWidth={20}
+                        style={{ margin: 0, maxWidth: '80%' }}
+                        format={(percent) => (
+                           <Tooltip title={`${confirmed_count} из ${players_limit || 0}`}>
+                              <span style={{ fontSize: '12px' }}>{percent}%</span>
+                           </Tooltip>
+                        )}
+                     />
+                     {/* </Flex> */}
                      {reserved_count > 0 && (
                         <div style={{ fontSize: '12px', color: '#999', marginTop: 2 }}>
                            Подтверждение оплаты: {reserved_count}
@@ -92,7 +106,32 @@ export const GameDetails = ({ game }: GameDetailsProps) => {
                      </Button>
                   )}
                </Flex>
+               {/* <div>
+                  <Progress
+                     percent={players_limit ? Math.round((confirmed_count / players_limit) * 100) : 0}
+                     size={isMobile ? 'small' : 'default'}
+                     status={players_limit && confirmed_count >= players_limit ? 'success' : 'active'}
+                     format={(percent) => (
+                        <Tooltip title={`${confirmed_count} из ${players_limit || 0}`}>
+                           <span style={{ fontSize: isMobile ? '12px' : '14px' }}>{percent}%</span>
+                        </Tooltip>
+                     )}
+                  />
+               </div> */}
             </Descriptions.Item>
+
+            {/* <Descriptions.Item label="">
+               <Progress
+                  percent={players_limit ? Math.round((confirmed_count / players_limit) * 100) : 0}
+                  size={isMobile ? 'small' : 'default'}
+                  status={players_limit && confirmed_count >= players_limit ? 'success' : 'active'}
+                  // format={(percent) => (
+                  //    <Tooltip title={`${confirmed_count} из ${players_limit || 0}`}>
+                  //       <span style={{ fontSize: isMobile ? '12px' : '14px' }}>{percent}%</span>
+                  //    </Tooltip>
+                  // )}
+               />
+            </Descriptions.Item> */}
 
             <Descriptions.Item label="Цена аренды">{game_price} ₽</Descriptions.Item>
 
@@ -104,9 +143,7 @@ export const GameDetails = ({ game }: GameDetailsProps) => {
 
             <Descriptions.Item label="Условия">
                <Flex justify="space-between" align="center">
-                  <Text type="success" style={{ fontSize: isMobile ? '14px' : '16px' }}>
-                     Оплата сразу
-                  </Text>
+                  <span>Оплата сразу</span>
                   <Tooltip title="После брони места необходимо оплатить в течение 1 часа, иначе бронь будет снята">
                      <QuestionCircleOutlined
                         style={{

@@ -17,10 +17,11 @@ import {
    UploadProps,
    message,
 } from 'antd'
+import ImgCrop from 'antd-img-crop'
 import { StarOutlined, UploadOutlined } from '@ant-design/icons'
 import { useEffect, useState } from 'react'
 import { supabase } from '@supabaseDir/supabaseClient'
-import { get_avatar_url, upload_avatar } from '@utils/storage'
+import { delete_avatar, get_avatar_url, upload_avatar } from '@utils/storage'
 import dayjs from 'dayjs'
 
 import s from './ProfilePage.module.scss'
@@ -38,10 +39,26 @@ type FormData = {
    birth_year: number
 }
 
+const useIsMobile = () => {
+   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+
+   useEffect(() => {
+      const handleResize = () => {
+         setIsMobile(window.innerWidth < 768)
+      }
+
+      window.addEventListener('resize', handleResize)
+      return () => window.removeEventListener('resize', handleResize)
+   }, [])
+
+   return isMobile
+}
+
 const ProfilePage = () => {
    const [form] = Form.useForm<FormData>()
    const [loading, setLoading] = useState(false)
    const [imageUrl, setImageUrl] = useState<string | null>(null)
+   const isMobile = useIsMobile()
 
    const [previewOpen, setPreviewOpen] = useState(false)
    // const [previewImage, setPreviewImage] = useState('')
@@ -90,7 +107,7 @@ const ProfilePage = () => {
 
             // Загружаем аватар
             if (data.avatar_url) {
-               const url = get_avatar_url(data.avatar_url)
+               const url = await get_avatar_url(data.avatar_url)
                setImageUrl(url)
             }
          } catch (error: any) {
@@ -147,16 +164,17 @@ const ProfilePage = () => {
    const layout = {
       colon: false,
       labelCol: {
-         span: 3,
+         span: isMobile ? 24 : 3,
       },
       wrapperCol: {
-         span: 6,
+         span: isMobile ? 24 : 6,
       },
    }
 
    const uploadProps: UploadProps = {
       listType: 'picture-circle',
       showUploadList: false,
+      style: { width: 100, height: 100 },
       beforeUpload: (file) => {
          const isImage = file.type.startsWith('image/')
          if (!isImage) {
@@ -175,7 +193,7 @@ const ProfilePage = () => {
 
             const filePath = await upload_avatar(file as File, authUserId)
             if (filePath) {
-               const url = get_avatar_url(filePath)
+               const url = await get_avatar_url(filePath)
                setImageUrl(url)
                await supabase.from('users').update({ avatar_url: filePath }).eq('id', internalUserId)
                messageApi.success('Аватар обновлён')
@@ -194,21 +212,49 @@ const ProfilePage = () => {
          <h3 style={{ margin: '0 0 16px 0' }}>Профиль пользователя</h3>
          <Spin spinning={loading}>
             <Form form={form} {...layout} labelAlign="left" onFinish={onFinish}>
-               <Row gutter={24} style={{ marginTop: '64px' }}>
-                  <Col span={4}>
-                     <Flex vertical gap={16} style={{ marginLeft: '16px' }}>
+               <Row gutter={[24, 24]} style={{ marginTop: '64px' }}>
+                  <Col xs={24} sm={24} md={4}>
+                     <Flex
+                        vertical
+                        gap={16}
+                        style={{ marginLeft: isMobile ? 0 : '16px' }}
+                        align={isMobile ? 'center' : 'start'}
+                     >
                         <div>
-                           <Upload {...uploadProps}>
-                              {imageUrl ? (
-                                 <Image
-                                    src={imageUrl}
-                                    alt="avatar"
-                                    style={{ width: '100%', height: '100%', borderRadius: '50%' }}
-                                 />
-                              ) : (
-                                 uploadButton
+                           <Flex vertical gap={8} align="center">
+                              <ImgCrop rotationSlider cropShape="round" showGrid={false}>
+                                 <Upload {...uploadProps}>
+                                    {imageUrl ? (
+                                       <Image
+                                          src={imageUrl}
+                                          alt="avatar"
+                                          style={{ width: '100%', height: '100%', borderRadius: '50%' }}
+                                          preview={false}
+                                       />
+                                    ) : (
+                                       uploadButton
+                                    )}
+                                 </Upload>
+                              </ImgCrop>
+                              {imageUrl && (
+                                 <Button
+                                    danger
+                                    size="small"
+                                    onClick={async () => {
+                                       try {
+                                          if (!authUserId) throw new Error('Пользователь не авторизован')
+                                          await delete_avatar(authUserId)
+                                          setImageUrl(null)
+                                          messageApi.success('Фото удалено')
+                                       } catch (error: any) {
+                                          messageApi.error('Ошибка удаления: ' + error.message)
+                                       }
+                                    }}
+                                 >
+                                    Удалить фото
+                                 </Button>
                               )}
-                           </Upload>
+                           </Flex>
 
                            <Image
                               style={{ display: 'none' }}
@@ -225,7 +271,7 @@ const ProfilePage = () => {
                         </Space>
                      </Flex>
                   </Col>
-                  <Col span={20}>
+                  <Col xs={24} sm={24} md={20}>
                      {/* Остальная форма — без изменений */}
                      <Item name="user_name" label="Логин" rules={[{ required: true, message: 'Введите логин' }]}>
                         <Input placeholder="Введите логин" />

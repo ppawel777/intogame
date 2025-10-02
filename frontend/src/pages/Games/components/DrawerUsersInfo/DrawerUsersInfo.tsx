@@ -18,6 +18,19 @@ type Props = {
 const DrawerUsersInfo = ({ id, onClose }: Props) => {
    const [loading, setLoading] = useState(true)
    const [usersList, setUsersList] = useState<UserFromGame[]>([])
+   const [avatarUrls, setAvatarUrls] = useState<Record<string, string>>({})
+
+   // Загрузка URL аватаров
+   useEffect(() => {
+      usersList.forEach(async (user) => {
+         if (user.avatar_url) {
+            const url = await get_avatar_url(user.avatar_url)
+            if (url) {
+               setAvatarUrls((prev) => ({ ...prev, [user.avatar_url || '']: url }))
+            }
+         }
+      })
+   }, [usersList])
 
    const getUsers = async () => {
       setLoading(true)
@@ -112,7 +125,7 @@ const DrawerUsersInfo = ({ id, onClose }: Props) => {
                      <Flex align="center" gap="middle" style={{ width: '100%', padding: '4px 0' }}>
                         <Avatar
                            size={window.innerWidth < 768 ? 60 : 80}
-                           src={get_avatar_url(item.avatar_url)}
+                           src={avatarUrls[item.avatar_url || '']}
                            icon={<UserOutlined />}
                            style={{ backgroundColor: '#87d068' }}
                         />
