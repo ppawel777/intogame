@@ -24,7 +24,9 @@ export const upload_avatar = async (file: File, userId: string): Promise<string 
    return filePath
 }
 
-export const get_avatar_url = (fileName: string): string => {
+export const get_avatar_url = (fileName: string | null): string | null => {
+   if (!fileName) return null
+
    const { data } = supabase.storage.from(BUCKET_NAME).getPublicUrl(fileName)
    return data.publicUrl
 }

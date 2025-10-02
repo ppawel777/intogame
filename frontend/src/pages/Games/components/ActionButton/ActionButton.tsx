@@ -1,10 +1,10 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState } from 'react'
 import { Button, InputNumber, Popconfirm, message } from 'antd'
 import { supabase } from '@supabaseDir/supabaseClient'
 
 import { GameType } from '@typesDir/gameTypes'
 import { extractErrorMessage } from '@pages/Games/utils/games_utils'
+import payment_icon from '@img/iokassa-gray.svg'
 
 type Props = {
    game: GameType
@@ -15,10 +15,7 @@ type Props = {
 }
 
 export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: Props) => {
-   const [confirmOpen, setConfirmOpen] = useState(false)
    const [quantity, setQuantity] = useState(1)
-   const [showQuantityModal, setShowQuantityModal] = useState(false)
-
    const [, contextHolder] = message.useMessage()
 
    if (isArchive || !userId) return null
@@ -30,7 +27,6 @@ export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: P
 
    const isConfirmed = user_vote_status === 'confirmed'
    const isPending = user_vote_status === 'pending'
-   const isCancelledOrFailed = ['cancelled', 'failed'].includes(user_vote_status || '')
 
    const maxAvailable = Math.max(0, (players_limit || 0) - confirmed_players_count)
 
@@ -49,7 +45,7 @@ export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: P
 
          if (error) throw error
 
-         quantity > 1 && message.success(`Забронировано ${quantity} мест(а)`)
+         if (quantity > 1) message.success(`Забронировано ${quantity} мест`)
          refresh()
       } catch (error: any) {
          message.error(error.message)
@@ -92,7 +88,24 @@ export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: P
       setLoading(true)
       try {
          const returnUrl = `${window.location.origin}/#/games/reserved`
-         const totalContribution = Math.ceil(((game_price || 0) / (players_limit || 1)) * quantity)
+
+         const { data: voteData, error: voteError } = await supabase
+            .from('votes')
+            .select('quantity')
+            .eq('user_id', userId)
+            .eq('game_id', id)
+            .eq('status', 'pending')
+            .single()
+
+         if (voteError || !voteData) {
+            message.error('Не удалось получить данные о бронировании')
+            refresh()
+            return
+         }
+
+         const actualQuantity = voteData.quantity
+         const pricePerPlayer = Math.ceil((game_price || 0) / (players_limit || 1))
+         const totalContribution = pricePerPlayer * actualQuantity
 
          const response = await fetch('/api/create-payment', {
             method: 'POST',
@@ -100,8 +113,10 @@ export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: P
             body: JSON.stringify({
                amount: totalContribution,
                description:
-                  quantity > 1 ? `Оплата за ${quantity} участника(ов) в игре #${id}` : `Оплата участия в игре #${id}`,
-               metadata: { gameId: id, userId, quantity },
+                  actualQuantity > 1
+                     ? `Оплата за ${actualQuantity} участника(ов) в игре #${id}`
+                     : `Оплата участия в игре #${id}`,
+               metadata: { gameId: id, userId, actualQuantity },
                returnUrl,
             }),
          })
@@ -117,8 +132,8 @@ export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: P
             throw new Error(data.error || `Ошибка ${response.status}`)
          }
 
-         if (data.confirmation_url) {
-            window.location.href = data.confirmation_url
+         if (data.confirmationUrl) {
+            window.location.href = data.confirmationUrl
          } else {
             throw new Error('Не получен URL для оплаты')
          }
@@ -133,71 +148,6 @@ export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: P
          setLoading(false)
       }
    }
-
-   // const handlePayment = async () => {
-   //    if (!isPending) {
-   //       return message.error('Оплата невозможна: статус не "ожидает оплаты"')
-   //    }
-
-   //    // Защита от повторного нажатия
-   //    setLoading(true)
-
-   //    try {
-   //       const returnUrl = `${window.location.origin}/#/games/reserved`
-   //       const contributionAmount =
-   //          players_limit && players_limit > 0 ? Math.ceil((game_price || 0) / players_limit) : game_price || 0
-   //       const response = await fetch('/api/create-payment', {
-   //          method: 'POST',
-   //          headers: {
-   //             'Content-Type': 'application/json',
-   //          },
-   //          body: JSON.stringify({
-   //             amount: contributionAmount,
-   //             description: `Оплата участия в игре #${id}`,
-   //             metadata: { gameId: id, userId },
-   //             returnUrl,
-   //          }),
-   //       })
-
-   //       const data = await response.json()
-
-   //       if (!response.ok) {
-   //          if (data.details?.includes('срок бронирования истёк')) {
-   //             message.warning(data.details)
-   //             refresh()
-   //             return
-   //          }
-   //          throw new Error(data.error || `Ошибка ${response.status}`)
-   //       }
-
-   //       // YooKassa возвращает объект с `confirmation_url`
-   //       if (data.paymentId) {
-   //          try {
-   //             localStorage.setItem('lastPaymentId', data.paymentId)
-   //          } catch (e) {
-   //             // ignore storage errors (Safari private mode etc.)
-   //             void e
-   //          }
-   //       }
-
-   //       const redirectUrl = data.confirmation_url || data.confirmationUrl
-   //       if (redirectUrl) {
-   //          // Перенаправляем пользователя на страницу оплаты
-   //          window.location.href = redirectUrl
-   //       } else {
-   //          throw new Error('Не получен URL для оплаты')
-   //       }
-   //    } catch (error: any) {
-   //       console.error('Ошибка оплаты:', error)
-   //       message.error(
-   //          error.message.includes('429')
-   //             ? 'Слишком много запросов. Подождите немного.'
-   //             : error.message || 'Не удалось создать платёж. Попробуйте позже.',
-   //       )
-   //    } finally {
-   //       setLoading(false)
-   //    }
-   // }
 
    const handleRefund = async () => {
       setLoading(true)
@@ -237,77 +187,33 @@ export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: P
          setLoading(false)
       }
    }
-   // const handleRefund = async () => {
-   //    setLoading(true)
-   //    try {
-   //       // Сначала получаем payment_id из votes
-   //       const { data: voteData, error: voteError } = await supabase
-   //          .from('votes')
-   //          .select('payment_id')
-   //          .eq('user_id', userId)
-   //          .eq('game_id', id)
-   //          .eq('status', 'confirmed')
-   //          .single()
 
-   //       if (voteError || !voteData?.payment_id) {
-   //          throw new Error('Не найден payment_id для возврата')
-   //       }
+   const QuantitySelector = () => (
+      <div style={{ marginTop: 8 }}>
+         <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, marginBottom: 6 }}>Количество мест:</label>
+         <InputNumber
+            min={1}
+            max={maxAvailable}
+            value={quantity}
+            onChange={(val) => setQuantity(val || 1)}
+            style={{ width: '100%' }}
+         />
+      </div>
+   )
 
-   //       const resp = await fetch('/api/refund-payment', {
-   //          method: 'POST',
-   //          headers: { 'Content-Type': 'application/json' },
-   //          body: JSON.stringify({ paymentId: voteData.payment_id }),
-   //       })
-   //       // Надёжный парсинг ответа (JSON или текст)
-   //       const raw = await resp.text()
-   //       let data: any = {}
-   //       try {
-   //          data = raw ? JSON.parse(raw) : {}
-   //       } catch (_) {
-   //          data = { error: raw }
-   //       }
-   //       if (!resp.ok) {
-   //          let serverMsg = ''
-   //          if (data && typeof data === 'object') {
-   //             const details = (data as any).details
-   //             if (details && typeof details === 'object') {
-   //                serverMsg = details.description || details.message || details.error || ''
-   //             } else if (typeof details === 'string') {
-   //                serverMsg = details
-   //             }
-   //             if (!serverMsg && typeof (data as any).error === 'string') {
-   //                serverMsg = (data as any).error
-   //             }
-   //          }
-   //          if (!serverMsg) serverMsg = raw || ''
-   //          throw new Error(serverMsg || `Ошибка ${resp.status}`)
-   //       }
-
-   //       // Обновляем статус голоса на cancelled
-   //       const { error: updateError } = await supabase
-   //          .from('votes')
-   //          .update({ status: 'cancelled' })
-   //          .eq('user_id', userId)
-   //          .eq('game_id', id)
-   //          .eq('status', 'confirmed')
-
-   //       if (updateError) throw updateError
-
-   //       message.success('Оплата отменена и запись удалена')
-   //       refresh()
-   //    } catch (e: any) {
-   //       const msg =
-   //          typeof e?.message === 'string' && e.message.trim()
-   //             ? e.message
-   //             : typeof e === 'string' && e.trim()
-   //               ? e
-   //               : 'Не удалось отменить оплату'
-   //       console.error('handleRefund error:', e)
-   //       message.error(msg)
-   //    } finally {
-   //       setLoading(false)
-   //    }
-   // }
+   const renderSignUpButton = () => (
+      <Popconfirm
+         title="Записаться на игру?"
+         description={<QuantitySelector />}
+         onConfirm={() => voteGame(quantity)}
+         okText="Да, записаться"
+         cancelText="Нет"
+      >
+         <Button type="primary" block style={{ marginTop: 16 }} disabled={isFull}>
+            {isFull ? 'Мест нет' : 'Записаться'}
+         </Button>
+      </Popconfirm>
+   )
 
    if (!isActive) {
       return (
@@ -348,6 +254,7 @@ export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: P
             {contextHolder}
             <Button type="primary" block style={{ marginTop: 16 }} onClick={handlePayment}>
                Оплатить
+               <img src={payment_icon} alt="payment" style={{ height: '20px', marginLeft: '8px' }} />
             </Button>
             <Popconfirm
                title="Отменить запись?"
@@ -364,71 +271,10 @@ export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: P
       )
    }
 
-   if (isCancelledOrFailed) {
-      return (
-         <Popconfirm
-            title="Записаться на игру?"
-            // description={'Подтвердите запись'}
-            description={
-               <div>
-                  {/* <p>Подтвердите запись</p> */}
-                  <label>
-                     Количество мест:
-                     <InputNumber
-                        min={1}
-                        max={maxAvailable}
-                        value={quantity}
-                        onChange={(val) => setQuantity(val || 1)}
-                        style={{ margin: '8px', width: '20%' }}
-                     />
-                  </label>
-               </div>
-            }
-            // onConfirm={voteGame}
-            onConfirm={() => voteGame(quantity)}
-            okText="Да, записаться"
-            cancelText="Нет"
-         >
-            {contextHolder}
-            <Button type="primary" block style={{ marginTop: 16 }} disabled={isFull}>
-               {isFull ? 'Мест нет' : 'Записаться'}
-            </Button>
-         </Popconfirm>
-      )
-   }
-
    return (
-      <Popconfirm
-         title="Записаться на игру?"
-         // description={'Подтвердите запись'}
-         description={
-            <div>
-               {/* <p>Подтвердите запись</p> */}
-               <label>
-                  Количество мест:
-                  <InputNumber
-                     min={1}
-                     max={maxAvailable}
-                     value={quantity}
-                     onChange={(val) => setQuantity(val || 1)}
-                     style={{ margin: '8px 0', width: '100%' }}
-                  />
-               </label>
-            </div>
-         }
-         open={confirmOpen}
-         onConfirm={() => {
-            voteGame(quantity)
-            setConfirmOpen(false)
-         }}
-         onCancel={() => setConfirmOpen(false)}
-         okText="Да, записаться"
-         cancelText="Нет"
-      >
+      <>
          {contextHolder}
-         <Button type="primary" block style={{ marginTop: 16 }} disabled={isFull} onClick={() => setConfirmOpen(true)}>
-            {isFull ? 'Мест нет' : 'Записаться'}
-         </Button>
-      </Popconfirm>
+         {renderSignUpButton()}
+      </>
    )
 }
