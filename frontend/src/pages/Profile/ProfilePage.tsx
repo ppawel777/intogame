@@ -25,6 +25,7 @@ import { delete_avatar, get_avatar_url, upload_avatar } from '@utils/storage'
 import dayjs from 'dayjs'
 
 import s from './ProfilePage.module.scss'
+import { useIsMobile } from '@utils/hooks/useIsMobile'
 
 const { Item } = Form
 
@@ -37,21 +38,6 @@ type FormData = {
    skill_level: string
    position: string
    birth_year: number
-}
-
-const useIsMobile = () => {
-   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
-
-   useEffect(() => {
-      const handleResize = () => {
-         setIsMobile(window.innerWidth < 768)
-      }
-
-      window.addEventListener('resize', handleResize)
-      return () => window.removeEventListener('resize', handleResize)
-   }, [])
-
-   return isMobile
 }
 
 const ProfilePage = () => {

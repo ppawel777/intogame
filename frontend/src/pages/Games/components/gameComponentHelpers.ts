@@ -1,2 +1,2 @@
 export const formatTime = 'HH:mm'
-export const formatDate = 'YYYY-MM-DD'
+export const formatDate = 'DD-MM-YYYY'

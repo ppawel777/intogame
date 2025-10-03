@@ -72,7 +72,12 @@ const GamesPage = ({ isArchive = false }: Props) => {
 
             if (gamesError) throw gamesError
 
-            setGames(gamesData || [])
+            const sortedGames = (gamesData || []).sort((a, b) => {
+               const dateA = new Date(a.game_date).getTime()
+               const dateB = new Date(b.game_date).getTime()
+               return dateA - dateB
+            })
+            setGames(sortedGames)
          } catch (error: any) {
             messageApi.error('Ошибка загрузки данных: ' + error.message)
          } finally {
@@ -90,7 +95,7 @@ const GamesPage = ({ isArchive = false }: Props) => {
 
    const openEditModal = (id: number) => setModalEdit({ open: true, id })
    const closeEditModal = () => setModalEdit({ open: false, id: 0 })
-
+   console.log(games)
    return (
       <div className={s.wrapReserved}>
          {contextHolder}

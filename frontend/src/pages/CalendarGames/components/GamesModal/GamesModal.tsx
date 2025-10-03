@@ -1,6 +1,6 @@
 import { GamesModalProps } from '@pages/CalendarGames/types'
 import { Badge, Flex, Modal, Progress, Space, Tooltip, Typography } from 'antd'
-import { BookOutlined, ExportOutlined } from '@ant-design/icons'
+import { ExportOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 
 import s from './GamesModal.module.scss'
@@ -17,7 +17,7 @@ export const GamesModal = ({ isOpen, onClose, games, date }: GamesModalProps) =>
                <li key={game.id} className={s.modalItem}>
                   <Flex vertical gap="small" style={{ width: '100%' }}>
                      <Space className={s.modalItemActions}>
-                        <BookOutlined style={{ fontSize: '18px', cursor: 'pointer' }} />
+                        {/* <BookOutlined style={{ fontSize: '18px', cursor: 'pointer' }} /> */}
                         <ExportOutlined style={{ fontSize: '18px', cursor: 'pointer' }} />
                      </Space>
                      {game.game_time && (
