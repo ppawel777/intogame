@@ -6,21 +6,7 @@ import { MenuOutlined } from '@ant-design/icons'
 import AvatarProfile from './AvatarProfile'
 
 import s from './NaviateTop.module.scss'
-
-const useIsMobile = () => {
-   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
-
-   useEffect(() => {
-      const handleResize = () => {
-         setIsMobile(window.innerWidth < 768)
-      }
-
-      window.addEventListener('resize', handleResize)
-      return () => window.removeEventListener('resize', handleResize)
-   }, [])
-
-   return isMobile
-}
+import { useIsMobile } from '@utils/hooks/useIsMobile'
 
 type MenuItem = Required<MenuProps>['items'][number]
 

@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 import { useEffect, useState } from 'react'
-import { Badge, Calendar, Col, Skeleton } from 'antd'
+import { Badge, Calendar, Flex, Radio, Select, Skeleton, Space } from 'antd'
 import type { CalendarProps } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
@@ -12,6 +12,8 @@ import { supabase } from '@supabaseDir/supabaseClient'
 import s from './CalendarGames.module.scss'
 import { statusToBadgeType } from './utils/helpers'
 import { GamesModal } from './components'
+import { useIsMobile } from '@utils/hooks/useIsMobile'
+import { formatDate } from '@pages/Games/components/gameComponentHelpers'
 
 const CalendarGames = () => {
    const [loading, setLoading] = useState(false)
@@ -20,6 +22,11 @@ const CalendarGames = () => {
    const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null)
    const [isModalOpen, setIsModalOpen] = useState(false)
    const [selectedGames, setSelectedGames] = useState<GameType[]>([])
+   const [statusFilter, setStatusFilter] = useState<string>('Активна')
+   const [placeFilter, setPlaceFilter] = useState<number | null>(null)
+   const [placeList, setPlaceList] = useState<any[]>([])
+
+   const isMobile = useIsMobile()
 
    useEffect(() => {
       const fetchAllData = async () => {
@@ -38,13 +45,37 @@ const CalendarGames = () => {
       fetchAllData()
    }, [])
 
+   useEffect(() => {
+      const getPlaces = async () => {
+         setLoading(true)
+         try {
+            const { data, error } = await supabase.from('places').select('*').eq('is_active', true)
+            if (error) throw error
+            const result = [
+               { value: null, label: 'Все площадки' },
+               ...data.map((item) => ({ value: item.id, label: item.name })),
+            ]
+            setPlaceList(result)
+         } catch (error: any) {
+            message.error(error.message)
+         } finally {
+            setLoading(false)
+         }
+      }
+
+      getPlaces()
+   }, [])
+
    const getListData = (value: Dayjs) => {
-      // Фильтруем игры для текущей даты
+      // Фильтруем игры для текущей даты и по статусу
       return games
          .filter((game) => {
             if (!game.game_date) return false
             const gameDate = dayjs(game.game_date)
-            return value.format('YYYY-MM-DD') === gameDate.format('YYYY-MM-DD')
+            const dateMatch = value.format(formatDate) === gameDate.format(formatDate)
+            const statusMatch = statusFilter === 'Все' || game.game_status === statusFilter
+            const placeMatch = placeFilter === null || game.place_id === placeFilter
+            return dateMatch && statusMatch && placeMatch
          })
          .map((game) => ({
             id: game.id,
@@ -76,7 +107,10 @@ const CalendarGames = () => {
    const handleDateSelect = (date: Dayjs) => {
       const gamesForDate = games.filter((game) => {
          const gameDate = dayjs(game.game_date)
-         return date.format('YYYY-MM-DD') === gameDate.format('YYYY-MM-DD')
+         const dateMatch = date.format(formatDate) === gameDate.format(formatDate)
+         const statusMatch = statusFilter === 'Все' || game.game_status === statusFilter
+         const placeMatch = placeFilter === null || game.place_id === placeFilter
+         return dateMatch && statusMatch && placeMatch
       })
 
       if (gamesForDate.length > 0) {
@@ -95,21 +129,50 @@ const CalendarGames = () => {
 
    return (
       <div className={s.calendarWrap}>
-         <h3 style={{ margin: '0 0 16px 0' }}>Календарь игр</h3>
-         <Col span={24}>
-            {contextHolder}
+         <Flex
+            vertical={isMobile}
+            justify="space-between"
+            align={isMobile ? 'stretch' : 'center'}
+            gap={isMobile ? 'small' : 'middle'}
+            style={{ marginBottom: '10px' }}
+         >
+            <h3 style={{ margin: '0 0 16px 0' }}>Календарь игр</h3>
+            <Space size="middle" direction={isMobile ? 'vertical' : 'horizontal'}>
+               <Select
+                  placeholder="Выберите площадку"
+                  options={placeList}
+                  loading={loading}
+                  value={placeFilter}
+                  onChange={setPlaceFilter}
+                  style={{ width: isMobile ? '100%' : '330px' }}
+               />
+               <Radio.Group
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  size={isMobile ? 'small' : 'middle'}
+               >
+                  <Radio.Button value="Все">Все</Radio.Button>
+                  <Radio.Button value="Активна">
+                     <Badge status="success" text="Активна" />
+                  </Radio.Button>
+                  <Radio.Button value="Завершена">
+                     <Badge status="default" text="Завершена" />
+                  </Radio.Button>
+                  <Radio.Button value="Отменена">
+                     <Badge status="error" text="Отменена" />
+                  </Radio.Button>
+               </Radio.Group>
+            </Space>
+         </Flex>
+         <div>
             {loading ? (
                <Skeleton active paragraph={{ rows: 6 }} />
             ) : (
                <Calendar cellRender={cellRender} onSelect={handleDateSelect} />
             )}
-            <GamesModal
-               isOpen={isModalOpen}
-               onClose={() => setIsModalOpen(false)}
-               games={selectedGames}
-               date={selectedDate}
-            />
-         </Col>
+         </div>
+         {contextHolder}
+         <GamesModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} games={selectedGames} date={selectedDate} />
       </div>
    )
 }
