@@ -105,32 +105,7 @@ export const GameDetails = ({ game }: GameDetailsProps) => {
                      </Button>
                   )}
                </Flex>
-               {/* <div>
-                  <Progress
-                     percent={players_limit ? Math.round((confirmed_count / players_limit) * 100) : 0}
-                     size={isMobile ? 'small' : 'default'}
-                     status={players_limit && confirmed_count >= players_limit ? 'success' : 'active'}
-                     format={(percent) => (
-                        <Tooltip title={`${confirmed_count} из ${players_limit || 0}`}>
-                           <span style={{ fontSize: isMobile ? '12px' : '14px' }}>{percent}%</span>
-                        </Tooltip>
-                     )}
-                  />
-               </div> */}
             </Descriptions.Item>
-
-            {/* <Descriptions.Item label="">
-               <Progress
-                  percent={players_limit ? Math.round((confirmed_count / players_limit) * 100) : 0}
-                  size={isMobile ? 'small' : 'default'}
-                  status={players_limit && confirmed_count >= players_limit ? 'success' : 'active'}
-                  // format={(percent) => (
-                  //    <Tooltip title={`${confirmed_count} из ${players_limit || 0}`}>
-                  //       <span style={{ fontSize: isMobile ? '12px' : '14px' }}>{percent}%</span>
-                  //    </Tooltip>
-                  // )}
-               />
-            </Descriptions.Item> */}
 
             <Descriptions.Item label="Цена аренды">{game_price} ₽</Descriptions.Item>
 
