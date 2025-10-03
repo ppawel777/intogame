@@ -94,7 +94,7 @@ const GamesPage = ({ isArchive = false }: Props) => {
    return (
       <div className={s.wrapReserved}>
          {contextHolder}
-         {!isArchive && (
+         {!isArchive ? (
             <Space size="large" style={{ marginBottom: 16 }} align="center">
                <h3 style={{ margin: '0 0 16px 0' }}>Ближайшие игры</h3>
                {isManager && (
@@ -103,6 +103,8 @@ const GamesPage = ({ isArchive = false }: Props) => {
                   </Button>
                )}
             </Space>
+         ) : (
+            <h3 style={{ margin: '0 0 16px 0' }}>Архив игр</h3>
          )}
 
          {loading ? (

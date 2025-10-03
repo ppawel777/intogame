@@ -13,6 +13,7 @@ const HomePage = lazy(() => import('../pages/Home/HomePage'))
 const PlacesPage = lazy(() => import('../pages/Places/PlacesPage'))
 const PlacePage = lazy(() => import('../pages/Places/Place/PlacePage'))
 const ProfilePage = lazy(() => import('../pages/Profile/ProfilePage'))
+const CalendarGames = lazy(() => import('../pages/CalendarGames/CalendarGames'))
 const HelpPage = lazy(() => import('../pages/Help/HelpPage'))
 const ServiceInfoPage = lazy(() => import('../pages/ServiceInfo/ServiceInfoPage'))
 const ContactsPage = lazy(() => import('../pages/Contacts/ContactsPage'))
@@ -39,6 +40,7 @@ const RoutesComponent = () => {
                <Route path="/service-info/" element={<ServiceInfoPage />} />
                <Route path="/contacts/" element={<ContactsPage />} />
                <Route path="/documents/" element={<DocumentsPage />} />
+               <Route path="/calendar-games/" element={<CalendarGames />} />
                <Route path="/games/*" element={<GamesRoutes />} />
                {/* <Route path="/payment-result" element={<PaymentResultPage />} /> */}
                <Route path="/" element={<HomePage />} />

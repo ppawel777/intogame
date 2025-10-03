@@ -36,6 +36,11 @@ const items: MenuItem[] = [
       // icon: <NumberOutlined />,
    },
    {
+      label: 'Календарь игр',
+      key: 'calendar-games',
+      // icon: <NumberOutlined />,
+   },
+   {
       label: 'Запись в игру',
       key: 'games/reserved',
       // icon: <PlayCircleOutlined />,
