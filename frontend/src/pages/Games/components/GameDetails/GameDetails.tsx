@@ -26,7 +26,6 @@ export const GameDetails = ({ game }: GameDetailsProps) => {
       reserved_count,
    } = game
 
-   console.log(game)
    const [drawerUsers, setDrawerUsers] = useState({ open: false, id: 0 })
 
    const [start, end] = game_time || ['', '']

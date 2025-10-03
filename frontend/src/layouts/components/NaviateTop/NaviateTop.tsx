@@ -79,20 +79,24 @@ const NaviateTop = () => {
    // Определяем активный ключ на основе текущего пути
    useEffect(() => {
       const path = location.pathname
-
-      // Убираем начальный и конечный слэш и разбиваем путь
       const normalizedPath = path.replace(/^\/|\/$/g, '')
+
+      // Если путь корневой или пустой, редиректим на games/reserved
+      if (normalizedPath === '' || normalizedPath === '/') {
+         navigate('/games/reserved')
+         setCurrent('games/reserved')
+         return
+      }
 
       // Ищем совпадение с ключами меню
       const matchedKey = menuKeys.find((key) => {
-         // Ключ может быть вложен: например, 'games/reserved'
          const normalizedKey = key.replace(/^\/|\/$/g, '')
          return normalizedPath === normalizedKey
       })
 
       // Устанавливаем current, только если есть совпадение
-      setCurrent(matchedKey || '')
-   }, [location.pathname])
+      setCurrent(matchedKey || 'games/reserved')
+   }, [location.pathname, navigate])
 
    const onClick: MenuProps['onClick'] = (e) => {
       const key = e.key

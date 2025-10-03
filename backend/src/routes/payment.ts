@@ -54,7 +54,7 @@ router.post('/create-payment', async (req, res) => {
     const confirmationReturnUrl =
       typeof returnUrl === 'string' && returnUrl.trim().length > 0
         ? returnUrl.trim()
-        : `${frontendUrl}/#/games/reserved`;
+        : `${frontendUrl}/games/reserved`;
 
     // Поиск голосования (если есть metadata)
     let voteId: string | null = null;

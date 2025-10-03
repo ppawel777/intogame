@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable max-len */
 import { useEffect, useState } from 'react'
-import { Button, Form, FormProps, Input, InputNumber, Modal, message } from 'antd'
+import { Button, Flex, Form, FormProps, Input, InputNumber, Modal, message } from 'antd'
 import { supabase } from '@supabaseDir/supabaseClient'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@context/providers/AuthProvider/AuthProvider'
@@ -22,25 +22,21 @@ const LoginPage = () => {
    const [submitTime, setSubmitTime] = useState<number | null>(null)
    const [showForgotPassword, setShowForgotPassword] = useState<string | false>(false)
    const [isResetModalOpen, setIsResetModalOpen] = useState(false)
-   const [resetEmail, setResetEmail] = useState('')
+   const [resetEmail, setResetEmail] = useState<string>('')
 
    const [honeypotName] = useState('custom_field_' + Math.random().toString(36).substr(2, 9))
 
    // Проверка recovery-ссылки при загрузке
    useEffect(() => {
-      const hash = window.location.hash.substring(1)
-      if (!hash) return
-
-      const params = new URLSearchParams(hash)
+      const params = new URLSearchParams(window.location.search)
       const type = params.get('type')
       const email = params.get('email')
 
-      if (type === 'recovery') {
-         setResetEmail(email || '')
+      if (type === 'recovery' && email) {
+         setResetEmail(email)
          setIsResetModalOpen(true)
-
-         // Очищаем хеш, чтобы не открывать модалку при F5
-         window.history.replaceState(null, '', window.location.pathname + window.location.search)
+         // Очищаем параметры, чтобы не открывать модалку при F5
+         window.history.replaceState(null, '', window.location.pathname)
       }
    }, [])
 
@@ -113,15 +109,20 @@ const LoginPage = () => {
       setLoading(true)
       try {
          const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: `${window.location.origin}${window.location.pathname}`, // останемся на /login, но с recovery hash
+            redirectTo: `${window.location.origin}${window.location.pathname}?type=recovery&email=${encodeURIComponent(email)}`,
          })
 
          if (error) throw error
 
-         messageApi.success('Ссылка для восстановления отправлена. Перейдите по ней, чтобы установить новый пароль.')
+         setResetEmail(email) // Сохраняем email для последующего входа
+         messageApi.success({
+            content: 'Ссылка для восстановления отправлена на почту. Перейдите по ней, чтобы установить новый пароль.',
+            duration: 10,
+         })
          setShowForgotPassword(false)
       } catch (err: any) {
-         messageApi.error('Ошибка отправки: ' + err.message)
+         const localizedMessage = localizeSupabaseError(err.message)
+         messageApi.error('Ошибка отправки: ' + localizedMessage)
       } finally {
          setLoading(false)
       }
@@ -130,14 +131,28 @@ const LoginPage = () => {
    const onFinishResetPassword = async (values: { password: string }) => {
       setLoading(true)
       try {
-         const { error } = await supabase.auth.updateUser({ password: values.password })
-         if (error) throw error
+         // Обновляем пароль
+         const { error: updateError } = await supabase.auth.updateUser({ password: values.password })
+         if (updateError) throw updateError
 
-         messageApi.success('Пароль успешно изменён')
+         // Выполняем вход с новым паролем
+         const { data, error: signInError } = await supabase.auth.signInWithPassword({
+            email: resetEmail,
+            password: values.password,
+         })
+         if (signInError) throw signInError
+
+         // Если вход успешен, обрабатываем сессию
+         if (data.session) {
+            handleSignIn(data.session)
+            messageApi.success('Пароль успешно изменён. Выполняем вход...')
+         }
+
          setIsResetModalOpen(false)
          form.resetFields(['password']) // очистим поле пароля
       } catch (err: any) {
-         messageApi.error('Не удалось сменить пароль: ' + err.message)
+         const localizedMessage = localizeSupabaseError(err.message)
+         messageApi.error('Не удалось сменить пароль: ' + localizedMessage)
       } finally {
          setLoading(false)
       }
@@ -182,13 +197,7 @@ const LoginPage = () => {
          {contextHolder}
 
          {/* Модалка для смены пароля */}
-         <Modal
-            title="Установите новый пароль"
-            open={isResetModalOpen}
-            footer={null}
-            onCancel={() => setIsResetModalOpen(false)}
-            destroyOnClose
-         >
+         <Modal title="Установите новый пароль" open={isResetModalOpen} footer={null} maskClosable={false} closable={false}>
             <Form layout="vertical" onFinish={onFinishResetPassword} disabled={loading}>
                <Form.Item
                   label="Новый пароль"
@@ -202,9 +211,14 @@ const LoginPage = () => {
                </Form.Item>
 
                <Form.Item>
-                  <Button type="primary" htmlType="submit" block loading={loading}>
-                     Сменить пароль
-                  </Button>
+                  <Flex gap="small">
+                     <Button type="primary" htmlType="submit" block loading={loading}>
+                        Сменить пароль
+                     </Button>
+                     <Button onClick={() => setIsResetModalOpen(false)} block disabled={loading}>
+                        Отмена
+                     </Button>
+                  </Flex>
                </Form.Item>
             </Form>
          </Modal>

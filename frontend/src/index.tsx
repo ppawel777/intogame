@@ -1,5 +1,5 @@
 import ReactDOM from 'react-dom/client'
-import { HashRouter } from 'react-router-dom'
+import { BrowserRouter } from 'react-router-dom'
 // import { StoreProvider } from '@context/providers/StoreProvider'
 // import { applyMiddleware, compose, createStore } from 'redux'
 // import { rootReducer } from './store/reducers'
@@ -18,9 +18,9 @@ import './layouts/main.scss'
 
 const IntoGame = (
    // <StoreProvider>
-   <HashRouter>
+   <BrowserRouter>
       <App />
-   </HashRouter>
+   </BrowserRouter>
    // </StoreProvider>
 )
 
