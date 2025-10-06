@@ -8,17 +8,16 @@ import payment_icon from '@img/iokassa-gray.svg'
 
 type Props = {
    game: GameType
-   isArchive?: boolean
    setLoading: React.Dispatch<React.SetStateAction<boolean>>
    userId: number | null
    refresh: () => void
 }
 
-export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: Props) => {
+export const ActionButton = ({ game, userId, setLoading, refresh }: Props) => {
    const [quantity, setQuantity] = useState(1)
    const [, contextHolder] = message.useMessage()
 
-   if (isArchive || !userId) return null
+   if (!userId) return null
 
    const { id, game_price, players_limit, confirmed_players_count, game_status, user_vote_status } = game
 

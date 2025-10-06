@@ -10,11 +10,7 @@ import { useUserId } from '@utils/hooks/useUserId'
 
 import s from './GamesPage.module.scss'
 
-type Props = {
-   isArchive?: boolean
-}
-
-const GamesPage = ({ isArchive = false }: Props) => {
+const GamesPage = () => {
    const [isModalCreateOpen, setIsModalCreateOpen] = useState(false)
    const [modalEdit, setModalEdit] = useState({ open: false, id: 0 })
 
@@ -34,7 +30,7 @@ const GamesPage = ({ isArchive = false }: Props) => {
             const { data: gamesData, error: gamesError } = await supabase
                .from('view_games')
                .select('*')
-               .eq('is_active', !isArchive)
+               .eq('is_active', true)
                .order('game_date', { ascending: true })
                .order('game_time', { ascending: true })
 
@@ -54,7 +50,7 @@ const GamesPage = ({ isArchive = false }: Props) => {
       }
 
       fetchAllData()
-   }, [userId, isArchive, refetch])
+   }, [userId, refetch])
 
    const refresh = () => setRefetch((prev) => !prev)
 
@@ -66,23 +62,19 @@ const GamesPage = ({ isArchive = false }: Props) => {
 
    return (
       <div className={s.wrapReserved}>
-         {!isArchive ? (
-            <Space size="large" style={{ marginBottom: 16 }} align="center">
-               <h3 style={{ margin: '0 0 16px 0' }}>Ближайшие игры</h3>
-               {isManager && (
-                  <Button icon={<PlusOutlined />} onClick={openCreateModal} style={{ margin: '0 0 16px 0' }}>
-                     Создать игру
-                  </Button>
-               )}
-            </Space>
-         ) : (
-            <h3 style={{ margin: '0 0 16px 0' }}>Архив игр</h3>
-         )}
+         <Space size="large" style={{ marginBottom: 16 }} align="center">
+            <h3 style={{ margin: '0 0 16px 0' }}>Ближайшие игры</h3>
+            {isManager && (
+               <Button icon={<PlusOutlined />} onClick={openCreateModal} style={{ margin: '0 0 16px 0' }}>
+                  Создать игру
+               </Button>
+            )}
+         </Space>
 
          {loading || userLoading ? (
             <Skeleton active paragraph={{ rows: 6 }} />
          ) : games.length === 0 ? (
-            <Empty description={isArchive ? 'Нет архивных игр' : 'Нет предстоящих игр'} style={{ padding: '48px 0' }} />
+            <Empty description={'Нет предстоящих игр'} style={{ padding: '48px 0' }} />
          ) : (
             <Flex gap={16} wrap className={s.cardWrap}>
                {games.map((game) => (
@@ -91,7 +83,6 @@ const GamesPage = ({ isArchive = false }: Props) => {
                      title={game.place_name}
                      extra={
                         <GameCardExtra
-                           isArchive={isArchive}
                            isManager={isManager}
                            gameId={game.id}
                            onEdit={openEditModal}
@@ -102,13 +93,7 @@ const GamesPage = ({ isArchive = false }: Props) => {
                      className={s.gameCard}
                   >
                      <GameDetails game={game} />
-                     <ActionButton
-                        game={game}
-                        isArchive={isArchive}
-                        setLoading={setLoading}
-                        userId={userId}
-                        refresh={refresh}
-                     />
+                     <ActionButton game={game} setLoading={setLoading} userId={userId} refresh={refresh} />
                   </Card>
                ))}
             </Flex>

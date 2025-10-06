@@ -6,7 +6,6 @@ import PrivateRoute from './PrivateRoute'
 import MainLayout from '../layouts/MainLayout'
 import LoginRoute from './LoginRoute'
 import GamesRoutes from './GameRoutes'
-// const PaymentResultPage = lazy(() => import('../pages/PaymentResult/PaymentResultPage'))
 
 const LoginPage = lazy(() => import('../pages/Login/LoginPage'))
 const HomePage = lazy(() => import('../pages/Home/HomePage'))
@@ -42,7 +41,6 @@ const RoutesComponent = () => {
                <Route path="/documents/" element={<DocumentsPage />} />
                <Route path="/calendar-games/" element={<CalendarGames />} />
                <Route path="/games/*" element={<GamesRoutes />} />
-               {/* <Route path="/payment-result" element={<PaymentResultPage />} /> */}
                <Route path="/" element={<HomePage />} />
                <Route path="*" element={<_404 />} />
             </Route>

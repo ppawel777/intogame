@@ -16,11 +16,11 @@ const items: MenuItem[] = [
    //    key: '/',
    //    // icon: <NumberOutlined />,
    // },
-   {
-      label: 'Мои игры',
-      key: 'my-games',
-      // icon: <NumberOutlined />,
-   },
+   // {
+   //    label: 'Мои игры',
+   //    key: 'my-games',
+   //    // icon: <NumberOutlined />,
+   // },
    {
       label: 'Запись в игру',
       key: 'games/reserved',
@@ -66,7 +66,7 @@ const items: MenuItem[] = [
 const NaviateTop = () => {
    const navigate = useNavigate()
    const location = useLocation()
-   const [current, setCurrent] = useState('my-games')
+   const [current, setCurrent] = useState('games/reserved')
    const [drawerVisible, setDrawerVisible] = useState(false)
    const isMobile = useIsMobile()
 
@@ -79,8 +79,8 @@ const NaviateTop = () => {
 
       // Если путь корневой или пустой, редиректим на дефолтный
       if (normalizedPath === '' || normalizedPath === '/') {
-         navigate('my-games')
-         setCurrent('my-games')
+         navigate('games/reserved')
+         setCurrent('games/reserved')
          return
       }
 
