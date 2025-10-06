@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@supabaseDir/supabaseClient'
 import { DatePicker, Form, FormProps, InputNumber, Select, TimePicker, message } from 'antd'
 import dayjs from 'dayjs'
-import { formatDate, formatTime } from '../gameComponentHelpers'
+import { formatDate, formatTime } from '@utils/formatDatetime'
 
 type Props = {
    form: any

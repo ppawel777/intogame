@@ -1,12 +1,15 @@
-import { useState } from 'react'
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { useEffect, useState } from 'react'
 import { Button, Descriptions, Flex, Tooltip, Typography } from 'antd'
 import dayjs from 'dayjs'
 
 import { GameType } from '@typesDir/gameTypes'
 import { QuestionCircleOutlined } from '@ant-design/icons'
-import { formatDate, formatTime } from '../gameComponentHelpers'
 import { DrawerUsersInfo } from '..'
 import { GameProgress } from '@components/GameProgress'
+import { PlayersAvatars } from '@components/PlayersAvatars'
+import { formatDate, formatTime } from '@utils/formatDatetime'
+import { supabase } from '@supabaseDir/supabaseClient'
 
 const { Text } = Typography
 
@@ -28,6 +31,7 @@ export const GameDetails = ({ game }: GameDetailsProps) => {
    } = game
 
    const [drawerUsers, setDrawerUsers] = useState({ open: false, id: 0 })
+   // const [totalPlayers, setTotalPlayers] = useState(0)
 
    const [start, end] = game_time || ['', '']
 
@@ -35,6 +39,24 @@ export const GameDetails = ({ game }: GameDetailsProps) => {
    const closeUsersDrawer = () => setDrawerUsers({ open: false, id: 0 })
 
    const isMobile = window.innerWidth < 768
+
+   // useEffect(() => {
+   //    const loadPlayersCount = async () => {
+   //       try {
+   //          const { count, error } = await supabase
+   //             .from('view_users_from_game')
+   //             .select('*', { count: 'exact', head: true })
+   //             .eq('game_id', id)
+
+   //          if (error) throw error
+   //          setTotalPlayers(count || 0)
+   //       } catch (error) {
+   //          console.error('Ошибка загрузки количества участников:', error)
+   //       }
+   //    }
+
+   //    loadPlayersCount()
+   // }, [id])
 
    return (
       <>
@@ -55,18 +77,18 @@ export const GameDetails = ({ game }: GameDetailsProps) => {
                <Text style={{ fontSize: isMobile ? '14px' : '16px', wordBreak: 'break-word' }}>{place_address}</Text>
             </Descriptions.Item>
 
-            <Descriptions.Item label="Лимит игроков">{players_limit}</Descriptions.Item>
+            {/* <Descriptions.Item label="Лимит игроков">{players_limit}</Descriptions.Item> */}
 
             <Descriptions.Item label="Участников">
                <Flex
                   vertical={isMobile}
-                  justify="space-between"
-                  align={isMobile ? 'flex-start' : 'center'}
+                  justify="flex-start"
+                  align="flex-start"
                   gap={isMobile ? 4 : 12}
                   style={{ width: '100%' }}
                >
                   <div style={{ width: '100%' }}>
-                     <GameProgress confirmedCount={confirmed_count} playersLimit={players_limit} />
+                     {/* <GameProgress confirmedCount={confirmed_count} playersLimit={players_limit} /> */}
                      {reserved_count > 0 && (
                         <div style={{ fontSize: '12px', color: '#999', marginTop: 2 }}>
                            Подтверждение оплаты: {reserved_count}
@@ -74,25 +96,18 @@ export const GameDetails = ({ game }: GameDetailsProps) => {
                      )}
                   </div>
 
-                  {(votes_count > 0 || reserved_count > 0) && (
-                     <Button
-                        // type="primary"
-                        size={isMobile ? 'small' : 'middle'}
-                        onClick={() => openUsersDrawer(id)}
-                        style={{
-                           minWidth: isMobile ? 'auto' : '80px',
-                           // padding: isMobile ? '0 8px' : undefined,
-                           height: isMobile ? 28 : undefined,
-                           marginTop: isMobile ? 8 : 0,
-                        }}
-                     >
-                        Показать
-                     </Button>
-                  )}
+                  <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: 8 }}>
+                     <PlayersAvatars gameId={id} maxVisible={4} size={isMobile ? 28 : 32} />
+                     {/* {confirmed_count > 0 && (
+                        <Text style={{ fontSize: '14px', color: '#666' }}>
+                           {confirmed_count} из {players_limit || 0} чел
+                        </Text>
+                     )} */}
+                  </div>
                </Flex>
             </Descriptions.Item>
 
-            <Descriptions.Item label="Цена аренды">{game_price} ₽</Descriptions.Item>
+            {/* <Descriptions.Item label="Цена аренды">{game_price} ₽</Descriptions.Item> */}
 
             <Descriptions.Item label="Цена взноса">
                <Text style={{ color: 'green' }}>

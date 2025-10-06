@@ -1,0 +1,1 @@
+export { PlayersAvatars } from './PlayersAvatars'
