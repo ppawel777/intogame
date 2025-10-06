@@ -6,4 +6,5 @@ export type GamesModalProps = {
    onClose: () => void
    games: GameType[]
    date: Dayjs | null
+   userId: number | null
 }

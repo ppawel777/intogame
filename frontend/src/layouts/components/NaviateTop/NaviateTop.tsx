@@ -17,13 +17,8 @@ const items: MenuItem[] = [
    //    // icon: <NumberOutlined />,
    // },
    {
-      label: 'Игровые площадки',
-      key: 'places',
-      // icon: <NumberOutlined />,
-   },
-   {
-      label: 'Календарь игр',
-      key: 'calendar-games',
+      label: 'Мои игры',
+      key: 'my-games',
       // icon: <NumberOutlined />,
    },
    {
@@ -32,10 +27,20 @@ const items: MenuItem[] = [
       // icon: <PlayCircleOutlined />,
    },
    {
-      label: 'Архив игр',
-      key: 'games/archive',
-      // icon: <CarryOutOutlined />,
+      label: 'Календарь игр',
+      key: 'calendar-games',
+      // icon: <NumberOutlined />,
    },
+   {
+      label: 'Игровые площадки',
+      key: 'places',
+      // icon: <NumberOutlined />,
+   },
+   // {
+   //    label: 'Архив игр',
+   //    key: 'games/archive',
+   //    // icon: <CarryOutOutlined />,
+   // },
    {
       label: 'О сервисе',
       key: 'service-info',
@@ -61,7 +66,7 @@ const items: MenuItem[] = [
 const NaviateTop = () => {
    const navigate = useNavigate()
    const location = useLocation()
-   const [current, setCurrent] = useState('games/reserved')
+   const [current, setCurrent] = useState('my-games')
    const [drawerVisible, setDrawerVisible] = useState(false)
    const isMobile = useIsMobile()
 
@@ -72,21 +77,21 @@ const NaviateTop = () => {
       const path = location.pathname
       const normalizedPath = path.replace(/^\/|\/$/g, '')
 
-      // Если путь корневой или пустой, редиректим на games/reserved
+      // Если путь корневой или пустой, редиректим на дефолтный
       if (normalizedPath === '' || normalizedPath === '/') {
-         navigate('/games/reserved')
-         setCurrent('games/reserved')
+         navigate('my-games')
+         setCurrent('my-games')
          return
       }
 
       // Ищем совпадение с ключами меню
       const matchedKey = menuKeys.find((key) => {
          const normalizedKey = key.replace(/^\/|\/$/g, '')
-         return normalizedPath === normalizedKey
+         return normalizedPath === normalizedKey || normalizedPath.startsWith(normalizedKey + '/')
       })
 
-      // Устанавливаем current, только если есть совпадение
-      setCurrent(matchedKey || 'games/reserved')
+      // Устанавливаем current только если есть точное совпадение или путь начинается с ключа меню
+      setCurrent(matchedKey || '')
    }, [location.pathname, navigate])
 
    const onClick: MenuProps['onClick'] = (e) => {

@@ -1,0 +1,18 @@
+.events {
+   margin: 0;
+   padding: 0;
+   list-style: none;
+
+   li {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+   }
+}
+
+.mobileBadge {
+   display: flex;
+   justify-content: center;
+   align-items: center;
+   margin-top: 4px;
+}

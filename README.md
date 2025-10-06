@@ -39,7 +39,7 @@ _Убедитесь, что создан .env файл_
 
 _Убедитесь, что создан /backend/.env файл_
 
-`sudo docker compose up --build -d` # Запуск через Docker Compose (только backend)
+`docker compose up --build -d` # Запуск через Docker Compose (только backend)
   
 
 **Другие команды docker:**

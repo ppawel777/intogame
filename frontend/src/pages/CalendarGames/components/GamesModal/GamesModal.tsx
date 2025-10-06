@@ -1,23 +1,98 @@
 import { GamesModalProps } from '@pages/CalendarGames/types'
-import { Badge, Flex, Modal, Progress, Space, Tooltip, Typography } from 'antd'
-import { ExportOutlined } from '@ant-design/icons'
+import { Badge, Flex, Modal, Space, Typography, message } from 'antd'
+import { ExportOutlined, StarFilled, StarOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
+import { useEffect, useState } from 'react'
+import { supabase } from '@supabaseDir/supabaseClient'
 
 import s from './GamesModal.module.scss'
 import { statusToBadgeType } from '@pages/CalendarGames/utils/helpers'
+import { GameProgress } from '@components/GameProgress'
 
 const { Text } = Typography
 
-export const GamesModal = ({ isOpen, onClose, games, date }: GamesModalProps) => {
-   console.log(games)
+export const GamesModal = ({ isOpen, onClose, games, date, userId }: GamesModalProps) => {
+   const [favoriteGames, setFavoriteGames] = useState<number[]>([])
+   const [loading, setLoading] = useState(false)
+
+   // Загружаем избранные игры при открытии модала
+   useEffect(() => {
+      if (isOpen && userId) {
+         loadFavoriteGames()
+      }
+   }, [isOpen, userId])
+
+   const loadFavoriteGames = async () => {
+      if (!userId) return
+
+      try {
+         const { data, error } = await supabase.from('favorites').select('game_id').eq('user_id', userId)
+
+         if (error) throw error
+         setFavoriteGames(data?.map((item) => item.game_id) || [])
+      } catch (error: any) {
+         console.error('Ошибка загрузки избранного:', error.message)
+      }
+   }
+
+   const handleAddToFavorites = async (game_id: number) => {
+      if (!userId) return
+
+      setLoading(true)
+      try {
+         const { error } = await supabase.from('favorites').insert([{ user_id: userId, game_id }])
+
+         if (error) throw error
+
+         setFavoriteGames((prev) => [...prev, game_id])
+         message.success('Игра добавлена в избранное')
+      } catch (error: any) {
+         message.error('Ошибка добавления в избранное: ' + error.message)
+      } finally {
+         setLoading(false)
+      }
+   }
+
+   const handleRemoveFromFavorites = async (game_id: number) => {
+      if (!userId) return
+
+      setLoading(true)
+      try {
+         const { error } = await supabase.from('favorites').delete().eq('user_id', userId).eq('game_id', game_id)
+
+         if (error) throw error
+
+         setFavoriteGames((prev) => prev.filter((id) => id !== game_id))
+         message.success('Игра удалена из избранного')
+      } catch (error: any) {
+         message.error('Ошибка удаления из избранного: ' + error.message)
+      } finally {
+         setLoading(false)
+      }
+   }
+
    return (
       <Modal title={date ? `Игры на ${date.format('DD-MM-YYYY')}` : ''} open={isOpen} onCancel={onClose} footer={null}>
          <ul className={s.modalList}>
             {games.map((game) => (
                <li key={game.id} className={s.modalItem}>
                   <Flex vertical gap="small" style={{ width: '100%' }}>
-                     <Space className={s.modalItemActions}>
-                        {/* <BookOutlined style={{ fontSize: '18px', cursor: 'pointer' }} /> */}
+                     <Space className={s.modalItemActions} size="middle">
+                        {favoriteGames.includes(game.id) ? (
+                           <StarFilled
+                              title="Удалить из избранного"
+                              style={{ fontSize: '20px', cursor: 'pointer', color: '#faad14' }}
+                              onClick={() => handleRemoveFromFavorites(game.id)}
+                              disabled={loading}
+                           />
+                        ) : (
+                           <StarOutlined
+                              title="Добавить в избранное"
+                              style={{ fontSize: '20px', cursor: 'pointer' }}
+                              onClick={() => handleAddToFavorites(game.id)}
+                              disabled={loading}
+                           />
+                        )}
                         <ExportOutlined style={{ fontSize: '18px', cursor: 'pointer' }} />
                      </Space>
                      {game.game_time && (
@@ -30,21 +105,11 @@ export const GamesModal = ({ isOpen, onClose, games, date }: GamesModalProps) =>
                      <Flex justify="space-between" align="center" style={{ width: '100%' }}>
                         <div style={{ flex: 1 }}>
                            {game.game_status === 'Активна' && (
-                              <Progress
-                                 percent={
-                                    game.players_limit ? Math.round((game.confirmed_count / game.players_limit) * 100) : 0
-                                 }
-                                 size="small"
-                                 status={
-                                    game.players_limit && game.confirmed_count >= game.players_limit ? 'success' : 'active'
-                                 }
+                              <GameProgress
+                                 confirmedCount={game.confirmed_count}
+                                 playersLimit={game.players_limit}
                                  strokeWidth={10}
-                                 style={{ margin: 0, maxWidth: '30%' }}
-                                 format={(percent) => (
-                                    <Tooltip title={`${game.confirmed_count} из ${game.players_limit || 0}`}>
-                                       <span style={{ fontSize: '12px' }}>{percent}%</span>
-                                    </Tooltip>
-                                 )}
+                                 maxWidth="30%"
                               />
                            )}
                         </div>
