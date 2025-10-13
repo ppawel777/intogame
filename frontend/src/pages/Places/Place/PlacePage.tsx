@@ -1,6 +1,6 @@
-import { Button, Image } from 'antd'
+import { Button } from 'antd'
 import { useNavigate, useParams } from 'react-router-dom'
-import place_example from '@img/place_example.jpg'
+// import place_example from '@img/place_example.jpg'
 
 import s from './Place.module.scss'
 
@@ -16,7 +16,7 @@ const PlacePage = () => {
             Назад
          </Button>
          <div>Футбольное поле {initId}</div>
-         <Image src={place_example} preview={false} />
+         {/* <Image src={place_example} preview={false} /> */}
       </div>
    )
 }
