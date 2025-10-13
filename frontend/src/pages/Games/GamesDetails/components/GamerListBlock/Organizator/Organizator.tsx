@@ -14,7 +14,6 @@ type Player = {
    id: number
    user_name: string
    avatar_url?: string
-   status_payment: string
    first_name?: string
    last_name?: string
 }
@@ -34,10 +33,16 @@ export const Organizator = ({ gameId, creator_id }: Props) => {
          if (!gameId || !creator_id) return
 
          try {
+            // const { data, error } = await supabase
+            //    .from('view_users_from_game')
+            //    .select('id, user_name, avatar_url, status_payment, first_name, last_name')
+            //    .eq('game_id', gameId)
+            //    .eq('id', creator_id)
+            //    .single()
             const { data, error } = await supabase
-               .from('view_users_from_game')
-               .select('id, user_name, avatar_url, status_payment, first_name, last_name')
-               .eq('game_id', gameId)
+               .from('users')
+               .select('id, user_name, avatar_url, first_name, last_name')
+               // .eq('game_id', gameId)
                .eq('id', creator_id)
                .single()
 
@@ -81,11 +86,7 @@ export const Organizator = ({ gameId, creator_id }: Props) => {
                            src={avatarUrls[creator.avatar_url || '']}
                            size={isMobile ? 40 : 50}
                            style={{
-                              backgroundColor: avatarUrls[creator.avatar_url || '']
-                                 ? creator.status_payment === 'confirmed'
-                                    ? '#52c41a'
-                                    : '#faad14'
-                                 : getRandomColor(creator.user_name),
+                              backgroundColor: avatarUrls[creator.avatar_url || ''] && getRandomColor(creator.user_name),
                            }}
                         >
                            {!avatarUrls[creator.avatar_url || ''] && getInitials(creator.user_name)}
