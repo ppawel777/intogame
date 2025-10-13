@@ -4,3 +4,17 @@
       local('Roboto-Regular'),
       url('/src/static/fonts/Roboto-Regular.ttf') format('truetype');
 }
+
+@font-face {
+   font-family: 'Roboto-Medium';
+   src:
+      local('Roboto-Medium'),
+      url('/src/static/fonts/Roboto-Medium.ttf') format('truetype');
+}
+
+@font-face {
+   font-family: 'Roboto-Bold';
+   src:
+      local('Roboto-Bold'),
+      url('/src/static/fonts/Roboto-Bold.ttf') format('truetype');
+}

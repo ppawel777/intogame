@@ -1,10 +1,11 @@
 /* eslint-disable max-len */
 import { useEffect, useState } from 'react'
-import { Flex, Select, Skeleton, Space, message } from 'antd'
+import { Button, Flex, Select, Skeleton, Space, message } from 'antd'
 import type { Dayjs } from 'dayjs'
 
 import { GameType } from '@typesDir/gameTypes'
 import { supabase } from '@supabaseDir/supabaseClient'
+import ModalCreateGame from '@pages/Games/ModalGame/ModalCreateGame'
 
 import s from './CalendarGames.module.scss'
 import { GamesModal } from './components'
@@ -12,6 +13,7 @@ import { useIsMobile } from '@utils/hooks/useIsMobile'
 import { useUserId } from '@utils/hooks/useUserId'
 import { GameStatusFilter } from '@components/GameStatusFilter'
 import { GameCalendar } from '@components/GameCalendar'
+import { PlusOutlined } from '@ant-design/icons'
 
 const CalendarGames = () => {
    const [loading, setLoading] = useState(false)
@@ -22,9 +24,10 @@ const CalendarGames = () => {
    const [statusFilter, setStatusFilter] = useState<string>('Активна')
    const [placeFilter, setPlaceFilter] = useState<number | null>(null)
    const [placeList, setPlaceList] = useState<any[]>([])
+   const [isModalCreateOpen, setIsModalCreateOpen] = useState(false)
 
    const isMobile = useIsMobile()
-   const { userId } = useUserId()
+   const { userId, isManager } = useUserId()
 
    useEffect(() => {
       const fetchAllData = async () => {
@@ -70,6 +73,25 @@ const CalendarGames = () => {
       setIsModalOpen(true)
    }
 
+   const refresh = () => {
+      const fetchAllData = async () => {
+         setLoading(true)
+         try {
+            const { data: gamesData, error: gamesError } = await supabase.from('view_games').select('*')
+            if (gamesError) throw gamesError
+            setGames(gamesData || [])
+         } catch (error: any) {
+            message.error('Ошибка загрузки данных: ' + error.message)
+         } finally {
+            setLoading(false)
+         }
+      }
+      fetchAllData()
+   }
+
+   const openCreateModal = () => setIsModalCreateOpen(true)
+   const closeCreateModal = () => setIsModalCreateOpen(false)
+
    return (
       <div className={s.calendarWrap}>
          <Flex
@@ -79,7 +101,15 @@ const CalendarGames = () => {
             gap={isMobile ? 'small' : 'middle'}
             style={{ marginTop: '-12px', marginBottom: '12px' }}
          >
-            <h3>Календарь игр</h3>
+            {/* <h3>Календарь игр</h3> */}
+            <Space size="large" align="center" style={{ marginTop: '12px' }}>
+               <h3 style={{ margin: '0 0 16px 0' }}>Календарь игр</h3>
+               {isManager && (
+                  <Button icon={<PlusOutlined />} onClick={openCreateModal} style={{ margin: '0 0 16px 0' }}>
+                     Создать игру
+                  </Button>
+               )}
+            </Space>
             <Space size="middle" direction={isMobile ? 'vertical' : 'horizontal'}>
                <Select
                   placeholder="Выберите площадку"
@@ -112,6 +142,7 @@ const CalendarGames = () => {
             date={selectedDate}
             userId={userId}
          />
+         {isModalCreateOpen && <ModalCreateGame onClose={closeCreateModal} onSuccess={refresh} />}
       </div>
    )
 }

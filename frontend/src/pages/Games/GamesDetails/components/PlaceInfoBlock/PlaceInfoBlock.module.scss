@@ -1,0 +1,50 @@
+.placeName {
+   font-size: 14px;
+   font-weight: 700;
+}
+
+.placeAddress {
+   font-size: 14px;
+   padding-top: 4px;
+   font-family: var(--secondary-font);
+   color: var(--light-grey);
+}
+
+.placeImage {
+   width: 100%!important;
+   height: 100px!important;
+   // object-fit: cover;
+   border-radius: 8px;
+   cursor: pointer;
+   
+   @media (max-width: 768px) {
+      height: 60px!important;
+   }
+}
+
+.placeInfo {
+   border-radius: 8px;
+   padding: 16px;
+   // background-color: #fafafa;
+}
+
+.placeInfoTitle {
+   margin: 0 0 12px 0;
+   font-size: 16px;
+   font-weight: 600;
+}
+
+.placeInfoList {
+   list-style: none;
+   padding: 0;
+   margin: 0;
+}
+
+.placeInfoItem {
+   padding: 8px 0;
+   // border-bottom: 1px solid #f0f0f0;
+   
+   &:last-child {
+      border-bottom: none;
+   }
+}

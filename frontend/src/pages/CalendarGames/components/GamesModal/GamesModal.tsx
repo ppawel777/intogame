@@ -3,18 +3,21 @@ import { Badge, Flex, Modal, Space, Typography, message } from 'antd'
 import { ExportOutlined, StarFilled, StarOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '@supabaseDir/supabaseClient'
 
 import s from './GamesModal.module.scss'
 import { statusToBadgeType } from '@pages/CalendarGames/utils/helpers'
-import { GameProgress } from '@components/GameProgress'
-import { formatDate } from '@utils/formatDatetime'
+import { formatDate, formatTime } from '@utils/formatDatetime'
 
 const { Text } = Typography
 
 export const GamesModal = ({ isOpen, onClose, games, date, userId }: GamesModalProps) => {
    const [favoriteGames, setFavoriteGames] = useState<number[]>([])
    const [loading, setLoading] = useState(false)
+   const navigate = useNavigate()
+
+   const navigateState = { state: { from: { pathname: '/calendar-games', title: 'Календарь игр' } } }
 
    // Загружаем избранные игры при открытии модала
    useEffect(() => {
@@ -94,25 +97,25 @@ export const GamesModal = ({ isOpen, onClose, games, date, userId }: GamesModalP
                               disabled={loading}
                            />
                         )}
-                        <ExportOutlined style={{ fontSize: '18px', cursor: 'pointer' }} />
+                        <ExportOutlined
+                           title="Перейти к игре"
+                           style={{ fontSize: '18px', cursor: 'pointer' }}
+                           onClick={() => {
+                              onClose()
+                              navigate(`/games/${game.id}`, navigateState)
+                           }}
+                        />
                      </Space>
                      {game.game_time && (
                         <div className={s.modalItemTime}>
-                           {dayjs(game.game_time[0]).format('HH:mm')} - {dayjs(game.game_time[1]).format('HH:mm')}
+                           {dayjs(game.game_time[0]).format(formatTime)} - {dayjs(game.game_time[1]).format(formatTime)}
                         </div>
                      )}
                      <div className={s.modalItemPlace}>{game.place_name}</div>
                      <Badge status={statusToBadgeType[game.game_status || '']} text={game.game_status} />
                      <Flex justify="space-between" align="center" style={{ width: '100%' }}>
                         <div style={{ flex: 1 }}>
-                           {game.game_status === 'Активна' && (
-                              <GameProgress
-                                 confirmedCount={game.confirmed_count}
-                                 playersLimit={game.players_limit}
-                                 strokeWidth={10}
-                                 maxWidth="30%"
-                              />
-                           )}
+                           {game.game_status === 'Активна' && <div>Участников: {game.confirmed_count}</div>}
                         </div>
                         {game.game_status === 'Активна' && (
                            <Text style={{ color: 'green' }}>

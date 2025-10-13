@@ -1,0 +1,99 @@
+.gameCard {
+   background: #fff;
+   border-radius: var(--border-radius);
+   padding: 12px;
+   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+   transition: box-shadow 0.3s ease;
+   &:hover {
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+   }
+}
+
+.date {
+   text-align: center;
+   padding: 8px;
+   background: #f5f5f5;
+   border-radius: var(--border-radius);
+   border: 1px solid #e8e8e8;
+}
+
+.dayOfWeek {
+   display: block;
+   font-size: 12px;
+   color: #666;
+   text-transform: capitalize;
+   margin-bottom: 4px;
+}
+
+.dateText {
+   display: block;
+   font-size: 16px;
+   font-weight: 600;
+   color: #262626;
+   margin-bottom: 4px;
+}
+
+.timeText {
+   display: block;
+   font-size: 14px;
+   color: #595959;
+}
+
+.statusSection {
+   padding-top: 8px;
+}
+
+.gameInfo {
+   padding-left: 20px;
+}
+
+.addressSection {
+   display: flex;
+   align-items: center;
+   gap: 8px;
+   margin-top: 4px;
+}
+
+
+
+.actionSection {
+   margin-top: 16px;
+}
+
+// Мобильная версия
+@media (max-width: 768px) {
+   .gameCard {
+      padding: 12px;
+   }
+
+   .dateSection {
+      min-width: 100px;
+   }
+
+   .date {
+      padding: 8px;
+   }
+
+   .dayOfWeek {
+      font-size: 11px;
+   }
+
+   .dateText {
+      font-size: 14px;
+   }
+
+   .timeText {
+      font-size: 12px;
+   }
+
+   .addressSection {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+   }
+
+   .counter {
+      font-size: 16px;
+   }
+}

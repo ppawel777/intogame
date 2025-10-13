@@ -11,8 +11,10 @@ interface GameFormValues {
    game_time: [string, string]
    game_price: number
    players_limit: number
+   players_min: number
    is_active: boolean
    game_status: 'Активна' | 'Завершена' | 'Отменена' | 'Перенесена'
+   additional_notes: string
 }
 
 type Props = {
@@ -46,9 +48,11 @@ const ModalEditGame = ({ id, onClose, onSuccess }: Props) => {
                game_date: data.game_date,
                game_time: [startTime, endTime],
                game_price: data.game_price,
+               players_min: data.players_min,
                players_limit: data.players_limit,
                is_active: data.is_active,
                game_status: data.game_status,
+               additional_notes: data.additional_notes,
             })
 
             // Заполняем форму
@@ -58,7 +62,9 @@ const ModalEditGame = ({ id, onClose, onSuccess }: Props) => {
                game_time: [dayjs(startTime), dayjs(endTime)],
                game_price: data.game_price,
                players_limit: data.players_limit,
+               players_min: data.players_min,
                is_active: data.is_active,
+               additional_notes: data.additional_notes,
                game_status: data.game_status,
             })
          } catch (error: any) {

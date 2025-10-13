@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import { Calendar } from 'antd'
 import type { CalendarProps } from 'antd'
 import type { Dayjs } from 'dayjs'
@@ -5,11 +6,12 @@ import { Badge } from 'antd'
 
 import { GameType } from '@typesDir/gameTypes'
 import { statusToBadgeType } from '@pages/CalendarGames/utils/helpers'
-import { formatDate } from '@pages/Games/components/gameComponentHelpers'
+// import { formatDate } from '@pages/Games/components/gameComponentHelpers'
 import { useIsMobile } from '@utils/hooks/useIsMobile'
 import dayjs from 'dayjs'
 
 import s from './GameCalendar.module.scss'
+import { formatDate, formatTime } from '@utils/formatDatetime'
 
 type GameCalendarProps = {
    games: GameType[]
@@ -36,7 +38,7 @@ export const GameCalendar = ({ games, statusFilter, placeFilter, onDateSelect, f
             id: game.id,
             type: statusToBadgeType[game.game_status ?? ''],
             content: game.game_time
-               ? `${dayjs(game.game_time[0]).format('HH:mm')} - ${dayjs(game.game_time[1]).format('HH:mm')} | ${game.place_name}`
+               ? `${dayjs(game.game_time[0]).format(formatTime)} - ${dayjs(game.game_time[1]).format(formatTime)} | ${game.place_name}`
                : '',
          }))
    }

@@ -2,11 +2,13 @@
    margin: 0;
    padding: 0;
    list-style: none;
+   font-size: 11px;
 
    li {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      font-size: 11px;
    }
 }
 
@@ -15,4 +17,28 @@
    justify-content: center;
    align-items: center;
    margin-top: 4px;
+}
+
+:global {
+   .ant-picker-calendar {
+      font-size: 12px;
+      
+      .ant-picker-calendar-date {
+         font-size: 12px;
+      }
+      
+      .ant-picker-calendar-date-content {
+         font-size: 11px;
+      }
+      
+      .ant-picker-calendar-month-select,
+      .ant-picker-calendar-year-select {
+         font-size: 12px;
+      }
+      .ant-badge-status-text {
+         padding: 0!important;
+         // margin: 0!important;
+         font-size: 13px!important;
+      }
+   }
 }

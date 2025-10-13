@@ -10,6 +10,8 @@ export type GameType = {
    game_date: string | null
    game_time: string[] | null
    game_price: number | null
+   creator_id: number | null
+   players_min: number | null
    players_limit: number | null
    confirmed_players_count: number
    condition_record: string | null

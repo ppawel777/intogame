@@ -1,0 +1,21 @@
+.statusText {
+   font-family: 13px;
+}
+
+.userName {
+   cursor: pointer;
+   &:hover {
+      text-decoration: underline;
+   }
+}
+
+.playerCollapse {
+   :global {
+      .ant-collapse-header {
+         padding-right: 0 !important;
+      }
+      .ant-collapse-content-box {
+         padding-right: 0 !important;
+      }
+   }
+}

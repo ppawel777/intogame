@@ -1,7 +1,7 @@
 import { ActionButton } from './ActionButton/ActionButton'
 import DrawerUsersInfo from './DrawerUsersInfo/DrawerUsersInfo'
 import FormComponent from './FormComponent/FormComponent'
-import { GameCardExtra } from './GameCardExtra/GameCardExtra'
-import { GameDetails } from './GameDetails/GameDetails'
+import { CardExtra as GameCardExtra } from '../../../components/GameCard/CardExtra/CardExtra'
+import { AboutGame } from './AboutGame/AboutGame'
 
-export { DrawerUsersInfo, GameCardExtra, FormComponent, GameDetails, ActionButton }
+export { DrawerUsersInfo, GameCardExtra, FormComponent, AboutGame, ActionButton }

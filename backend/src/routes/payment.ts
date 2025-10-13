@@ -363,13 +363,24 @@ router.post('/refund-payment', async (req, res) => {
     }
 
     // Проверка доступной суммы для возврата
-    const refundableStr = yookassaPayment.refundable_amount?.value;
+    // Если refundable_amount отсутствует, используем amount.value
+    const refundableStr = yookassaPayment.refundable_amount?.value || yookassaPayment.amount?.value;
     const refundableNumeric = parseAmountValue(refundableStr);
     const refundableMax = Number.isFinite(refundableNumeric) ? refundableNumeric : 0;
 
     if (refundableMax <= 0) {
-      logger.warn('Нет средств для возврата:', { refundableMax });
-      return res.status(400).json({ error: 'Нет средств для возврата' });
+      logger.warn('Нет средств для возврата:', { 
+        refundableMax, 
+        paymentId: normalizedPaymentId,
+        status,
+        paid,
+        refundable_amount: yookassaPayment.refundable_amount,
+        amount: yookassaPayment.amount
+      });
+      return res.status(400).json({ 
+        error: 'Нет средств для возврата',
+        details: 'Платеж уже был возвращен или недоступен для возврата'
+      });
     }
 
     // Определяем сумму возврата

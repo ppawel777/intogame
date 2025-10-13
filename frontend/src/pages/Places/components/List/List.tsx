@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { LikeOutlined, MessageOutlined, StarOutlined } from '@ant-design/icons'
 import { Input, List, Skeleton, Space, message } from 'antd'
 import React, { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+// import { Link } from 'react-router-dom'
 import { supabase } from '@supabaseDir/supabaseClient'
 
 import s from './List.module.scss'
@@ -62,7 +63,8 @@ const PlacesList = () => {
                      ]}
                      extra={<img width={272} alt="logo" src={item.photo_link} />}
                   >
-                     <List.Item.Meta title={<Link to={`${item.id}/`}>{item.name}</Link>} description={item.phone} />
+                     {/* <List.Item.Meta title={<Link to={`${item.id}/`}>{item.name}</Link>} description={item.phone} /> */}
+                     <List.Item.Meta title={item.name}></List.Item.Meta>
                      <>
                         <p>{item.description}</p>
                         <p className="mt-14">

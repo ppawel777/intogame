@@ -1,6 +1,6 @@
 import { memo, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Drawer, Flex, Menu, MenuProps } from 'antd'
+import { Drawer, Flex, Menu, MenuProps, Space } from 'antd'
 import { MenuOutlined } from '@ant-design/icons'
 
 import AvatarProfile from './AvatarProfile'
@@ -16,11 +16,11 @@ const items: MenuItem[] = [
    //    key: '/',
    //    // icon: <NumberOutlined />,
    // },
-   // {
-   //    label: 'Мои игры',
-   //    key: 'my-games',
-   //    // icon: <NumberOutlined />,
-   // },
+   {
+      label: 'Мои игры',
+      key: 'games/my-games',
+      // icon: <NumberOutlined />,
+   },
    {
       label: 'Запись в игру',
       key: 'games/reserved',
@@ -122,6 +122,7 @@ const NaviateTop = () => {
          {isMobile ? (
             <>
                <MenuOutlined className={s.burgerIcon} onClick={toggleDrawer} />
+
                <Drawer placement="left" onClose={toggleDrawer} open={drawerVisible} title="Меню" width={280}>
                   {renderMenu()}
                </Drawer>
@@ -129,7 +130,12 @@ const NaviateTop = () => {
          ) : (
             renderMenu()
          )}
-         <AvatarProfile />
+         <Space>
+            {/* <Button type="link" className={s.cityLink}>
+               г.Уфа
+            </Button> */}
+            <AvatarProfile />
+         </Space>
       </Flex>
    )
 }

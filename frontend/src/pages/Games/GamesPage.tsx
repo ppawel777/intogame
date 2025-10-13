@@ -1,17 +1,14 @@
 import { useEffect, useState } from 'react'
-import { Button, Card, Empty, Flex, Skeleton, Space, message } from 'antd'
-import { PlusOutlined } from '@ant-design/icons'
-import ModalCreateGame from './ModalGame/ModalCreateGame'
+import { Empty, Skeleton, message } from 'antd'
 import ModalEditGame from './ModalGame/ModalEditGame'
 import { supabase } from '@supabaseDir/supabaseClient'
 import { GameType } from '@typesDir/gameTypes'
-import { ActionButton, GameCardExtra, GameDetails } from './components'
+import { GameCard } from '@components/GameCard'
 import { useUserId } from '@utils/hooks/useUserId'
 
 import s from './GamesPage.module.scss'
 
 const GamesPage = () => {
-   const [isModalCreateOpen, setIsModalCreateOpen] = useState(false)
    const [modalEdit, setModalEdit] = useState({ open: false, id: 0 })
 
    const [refetch, setRefetch] = useState(false)
@@ -19,6 +16,8 @@ const GamesPage = () => {
    const [games, setGames] = useState<GameType[]>([])
 
    const { userId, isManager, loading: userLoading } = useUserId()
+
+   const navigateState = { state: { from: { pathname: '/games/reserved', title: 'Запись в игру' } } }
 
    // Загрузка голосов и игр только после получения userId
    useEffect(() => {
@@ -54,52 +53,37 @@ const GamesPage = () => {
 
    const refresh = () => setRefetch((prev) => !prev)
 
-   const openCreateModal = () => setIsModalCreateOpen(true)
-   const closeCreateModal = () => setIsModalCreateOpen(false)
-
-   const openEditModal = (id: number) => setModalEdit({ open: true, id })
+   const openEditModal = (e: React.MouseEvent, id: number) => {
+      e.stopPropagation()
+      setModalEdit({ open: true, id })
+   }
    const closeEditModal = () => setModalEdit({ open: false, id: 0 })
 
    return (
       <div className={s.wrapReserved}>
-         <Space size="large" style={{ marginBottom: 16 }} align="center">
-            <h3 style={{ margin: '0 0 16px 0' }}>Ближайшие игры</h3>
-            {isManager && (
-               <Button icon={<PlusOutlined />} onClick={openCreateModal} style={{ margin: '0 0 16px 0' }}>
-                  Создать игру
-               </Button>
-            )}
-         </Space>
+         <h3 style={{ margin: '0 0 16px 0' }}>Ближайшие игры</h3>
 
          {loading || userLoading ? (
             <Skeleton active paragraph={{ rows: 6 }} />
          ) : games.length === 0 ? (
             <Empty description={'Нет предстоящих игр'} style={{ padding: '48px 0' }} />
          ) : (
-            <Flex gap={16} wrap className={s.cardWrap}>
+            <div className={s.gamesList}>
                {games.map((game) => (
-                  <Card
+                  <GameCard
                      key={game.id}
-                     title={game.place_name}
-                     extra={
-                        <GameCardExtra
-                           isManager={isManager}
-                           gameId={game.id}
-                           onEdit={openEditModal}
-                           playerTotal={game.confirmed_players_count}
-                           playerLimit={game.players_limit}
-                        />
-                     }
-                     className={s.gameCard}
-                  >
-                     <GameDetails game={game} />
-                     <ActionButton game={game} setLoading={setLoading} userId={userId} refresh={refresh} />
-                  </Card>
+                     game={game}
+                     isManager={isManager}
+                     userId={userId}
+                     onEdit={openEditModal}
+                     setLoading={setLoading}
+                     refresh={refresh}
+                     navigateState={navigateState}
+                  />
                ))}
-            </Flex>
+            </div>
          )}
 
-         {isModalCreateOpen && <ModalCreateGame onClose={closeCreateModal} onSuccess={refresh} />}
          {modalEdit.open && <ModalEditGame id={modalEdit.id} onClose={closeEditModal} onSuccess={refresh} />}
       </div>
    )
