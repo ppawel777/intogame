@@ -22,7 +22,6 @@ const { Text } = Typography
 
 type GameCardProps = {
    game: GameType
-   isManager?: boolean
    userId: number | null
    onEdit?: (e: React.MouseEvent, id: number) => void
    setLoading: React.Dispatch<React.SetStateAction<boolean>>
@@ -30,7 +29,7 @@ type GameCardProps = {
    navigateState?: { state: { from: { pathname: string; title: string } } }
 }
 
-export const GameCard = ({ game, isManager, userId, onEdit, setLoading, refresh, navigateState }: GameCardProps) => {
+export const GameCard = ({ game, userId, onEdit, setLoading, refresh, navigateState }: GameCardProps) => {
    const {
       id,
       game_date,

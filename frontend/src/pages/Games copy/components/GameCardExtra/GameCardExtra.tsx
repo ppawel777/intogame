@@ -5,7 +5,6 @@ import s from './GameCardExtra.module.scss'
 
 type GameCardExtraProps = {
    isArchive?: boolean
-   isManager?: boolean
    gameId: number
    onEdit?: (id: number) => void
    playerTotal?: number
@@ -14,7 +13,6 @@ type GameCardExtraProps = {
 
 export const GameCardExtra = ({
    isArchive,
-   isManager,
    gameId,
    onEdit,
    playerTotal = 0,
@@ -31,14 +29,10 @@ export const GameCardExtra = ({
             />
          )}
 
-         {isManager ? (
-            !isArchive ? (
-               <FormOutlined className={s.editGameBtn} onClick={() => onEdit?.(gameId)} />
-            ) : (
-               <Badge status="default" text={<span className={s.extraClose}>Игра состоялась</span>} />
-            )
+         {!isArchive ? (
+            <FormOutlined className={s.editGameBtn} onClick={() => onEdit?.(gameId)} />
          ) : (
-            isArchive && <Badge status="default" text={<span className={s.extraClose}>Игра состоялась</span>} />
+            <Badge status="default" text={<span className={s.extraClose}>Игра состоялась</span>} />
          )}
       </Space>
    )

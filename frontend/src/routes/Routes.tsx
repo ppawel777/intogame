@@ -8,6 +8,7 @@ import LoginRoute from './LoginRoute'
 import GamesRoutes from './GameRoutes'
 
 const LoginPage = lazy(() => import('../pages/Login/LoginPage'))
+const ConfirmedPage = lazy(() => import('../pages/Confirmed/ConfirmedPage'))
 const HomePage = lazy(() => import('../pages/Home/HomePage'))
 const PlacesPage = lazy(() => import('../pages/Places/PlacesPage'))
 const PlacePage = lazy(() => import('../pages/Places/Place/PlacePage'))
@@ -52,6 +53,15 @@ const RoutesComponent = () => {
                }
             >
                <Route path="login" />
+            </Route>
+            <Route
+               element={
+                  <LoginRoute>
+                     <ConfirmedPage />
+                  </LoginRoute>
+               }
+            >
+               <Route path="confirmed" />
             </Route>
             <Route path="*" element={<_404 />} />
          </Routes>

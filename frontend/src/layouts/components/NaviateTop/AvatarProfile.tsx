@@ -42,9 +42,15 @@ const AvatarProfile = () => {
                .from('users')
                .select('id, user_name, avatar_url')
                .eq('uuid', authUserId)
-               .single()
+               .maybeSingle()
 
             if (userError) throw userError
+
+            // Если записи ещё нет в users (новый пользователь с подтверждённым email)
+            if (!userData) {
+               setUser({ id: 0, user_name: 'Гость' })
+               return
+            }
 
             const name = userData.user_name?.trim() ? userData.user_name.trim() : 'Без имени'
 

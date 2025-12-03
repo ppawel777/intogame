@@ -27,7 +27,7 @@ const CalendarGames = () => {
    const [isModalCreateOpen, setIsModalCreateOpen] = useState(false)
 
    const isMobile = useIsMobile()
-   const { userId, isManager } = useUserId()
+   const { userId } = useUserId()
 
    useEffect(() => {
       const fetchAllData = async () => {
@@ -104,11 +104,9 @@ const CalendarGames = () => {
             {/* <h3>Календарь игр</h3> */}
             <Space size="large" align="center" style={{ marginTop: '12px' }}>
                <h3 style={{ margin: '0 0 16px 0' }}>Календарь игр</h3>
-               {isManager && (
-                  <Button icon={<PlusOutlined />} onClick={openCreateModal} style={{ margin: '0 0 16px 0' }}>
-                     Создать игру
-                  </Button>
-               )}
+               <Button icon={<PlusOutlined />} onClick={openCreateModal} style={{ margin: '0 0 16px 0' }}>
+                  Создать игру
+               </Button>
             </Space>
             <Space size="middle" direction={isMobile ? 'vertical' : 'horizontal'}>
                <Select

@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import paymentRoutes from './routes/payment';
+import adminRoutes from './routes/admin';
 import { createLogger } from './routes/utils/logger';
 
 const app = express();
@@ -23,6 +24,7 @@ app.get('/api/health', (_, res) => {
 });
 
 app.use('/api', paymentRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.listen(PORT, '0.0.0.0', () => {
   logger.log(`Server is running on http://0.0.0.0:${PORT}`);

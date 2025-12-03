@@ -57,9 +57,10 @@ const LoginPage = () => {
 
    const handleAuth = async (values: any) => {
       setLoading(true)
+      console.log('signup OK, navigating to /confirmed', values.email)
       try {
          if (isRegistering) {
-            const { data: authData, error } = await supabase.auth.signUp({
+            const { error } = await supabase.auth.signUp({
                email: values.email,
                password: values.password,
                options: {
@@ -72,16 +73,12 @@ const LoginPage = () => {
 
             if (error) throw error
 
-            const { error: publicError } = await supabase.from('users').insert({
-               uuid: authData.user?.id,
-               email: values.email,
-               user_name: values.user_name,
-               user_phone: values.phone,
-            })
+            // Запись в public.users теперь создаётся триггером в БД (после вставки в auth.users)
+            // Поэтому на фронте ничего дополнительно не вставляем
 
-            if (publicError) throw publicError
-
-            authData.session && handleSignIn(authData.session)
+            // После успешной регистрации перенаправляем на страницу подтверждения
+            messageApi.success('Регистрация успешна! Проверьте почту для подтверждения email.')
+            navigate('/confirmed', { state: { email: values.email } })
          } else {
             const { data, error } = await supabase.auth.signInWithPassword({
                email: values.email,

@@ -26,7 +26,7 @@ const MyGames = () => {
    const [isModalCreateOpen, setIsModalCreateOpen] = useState(false)
    const [isModalEditOpen, setIsModalEditOpen] = useState({ open: false, id: 0 })
    const [statusFilter, setStatusFilter] = useState<string>('Все')
-   const { userId, isManager, loading: userLoading } = useUserId()
+   const { userId, loading: userLoading } = useUserId()
 
    const isMobile = useIsMobile()
 
@@ -276,7 +276,6 @@ const MyGames = () => {
                      <GameCard
                         key={game.id}
                         game={game}
-                        isManager={isManager}
                         userId={userId}
                         setLoading={setLoading}
                         refresh={refresh}

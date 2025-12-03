@@ -4,7 +4,6 @@ import { message } from 'antd'
 
 export const useUserId = () => {
    const [userId, setUserId] = useState<number | null>(null)
-   const [isManager, setIsManager] = useState(false)
    const [loading, setLoading] = useState(true)
 
    useEffect(() => {
@@ -20,13 +19,19 @@ export const useUserId = () => {
 
             const { data: userData, error: userError } = await supabase
                .from('users')
-               .select('id, is_manager')
+               .select('id')
                .eq('uuid', session.user.id)
-               .single()
+               .maybeSingle()
 
             if (userError) throw userError
+
+            // Если записи нет — просто считаем, что пользователь ещё не оформлен в публичной таблице
+            if (!userData) {
+               setUserId(null)
+               return
+            }
+
             setUserId(userData.id)
-            setIsManager(!!userData.is_manager)
          } catch (error: any) {
             message.error('Ошибка авторизации: ' + error.message)
          } finally {
@@ -37,5 +42,5 @@ export const useUserId = () => {
       loadUser()
    }, [])
 
-   return { userId, isManager, loading }
+   return { userId, loading }
 }

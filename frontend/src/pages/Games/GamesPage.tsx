@@ -15,7 +15,7 @@ const GamesPage = () => {
    const [loading, setLoading] = useState(true) // общая загрузка при первом входе
    const [games, setGames] = useState<GameType[]>([])
 
-   const { userId, isManager, loading: userLoading } = useUserId()
+   const { userId, loading: userLoading } = useUserId()
 
    const navigateState = { state: { from: { pathname: '/games/reserved', title: 'Запись в игру' } } }
 
@@ -73,7 +73,6 @@ const GamesPage = () => {
                   <GameCard
                      key={game.id}
                      game={game}
-                     isManager={isManager}
                      userId={userId}
                      onEdit={openEditModal}
                      setLoading={setLoading}

@@ -47,7 +47,6 @@ export type UserFromGame = {
    avatar_url: string | null
    rating: number | null
    score: number | null
-   is_manager: boolean
    game_id: number
    status_payment: 'pending' | 'confirmed' | 'cancelled' | 'failed' | null
    skill_level: 'Не указано' | 'Новичок' | 'Начинающий' | 'Любитель' | 'Опытный любитель' | 'Полупрофи' | 'Профи'

@@ -1,0 +1,70 @@
+.wrap {
+   &-confirmed {
+      font-family: 'Roboto-Regular';
+      height: 100vh;
+      margin-left: auto;
+      margin-right: auto;
+      display: flex;
+      align-content: center;
+      align-items: center;
+      justify-content: center;
+      // padding-bottom: 30px;
+      &__block {
+         min-width: 30%;
+         max-width: 600px;
+         width: 100%;
+         &-header {
+            display: flex;
+            align-content: center;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 32px;
+            h2 {
+               // font-weight: 900;
+               font-size: 32px;
+               line-height: 40px;
+               color: #004c97;
+               padding: 0;
+               margin: 0;
+            }
+         }
+         &-content {
+            padding: 20px;
+            background: var(--base-background);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            border-radius: var(--border-radius);
+
+            // label формы ("Код подтверждения")
+            & :global(.ant-form-item-label > label) {
+               // font-family: 'Roboto-Regular' !important;
+               font-size: 16px;
+            }
+
+            p {
+               color: #8c8c8c;
+               font-size: 16px;
+               line-height: 22px;
+            }
+         }
+      }
+   }
+}
+@media (max-width: 768px) {
+   .wrap-confirmed {
+      height: auto;
+      padding: 16px;
+   }
+
+   .wrap-confirmed__block {
+      min-width: 100%;
+   }
+
+   .wrap-confirmed__block-content {
+      padding: 24px 16px 16px;
+   }
+
+   .wrap-confirmed__block-header h2 {
+      font-size: 24px;
+      line-height: 32px;
+   }
+}

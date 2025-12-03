@@ -22,7 +22,7 @@ const GamesPage = ({ isArchive = false }: Props) => {
    const [loading, setLoading] = useState(true) // общая загрузка при первом входе
    const [games, setGames] = useState<GameType[]>([])
 
-   const { userId, isManager, loading: userLoading } = useUserId()
+   const { userId, loading: userLoading } = useUserId()
 
    // Загрузка голосов и игр только после получения userId
    useEffect(() => {
@@ -69,11 +69,9 @@ const GamesPage = ({ isArchive = false }: Props) => {
          {!isArchive ? (
             <Space size="large" style={{ marginBottom: 16 }} align="center">
                <h3 style={{ margin: '0 0 16px 0' }}>Ближайшие игры</h3>
-               {isManager && (
-                  <Button icon={<PlusOutlined />} onClick={openCreateModal} style={{ margin: '0 0 16px 0' }}>
-                     Создать игру
-                  </Button>
-               )}
+               <Button icon={<PlusOutlined />} onClick={openCreateModal} style={{ margin: '0 0 16px 0' }}>
+                  Создать игру
+               </Button>
             </Space>
          ) : (
             <h3 style={{ margin: '0 0 16px 0' }}>Архив игр</h3>
@@ -92,7 +90,6 @@ const GamesPage = ({ isArchive = false }: Props) => {
                      extra={
                         <GameCardExtra
                            isArchive={isArchive}
-                           isManager={isManager}
                            gameId={game.id}
                            onEdit={openEditModal}
                            playerTotal={game.confirmed_players_count}
