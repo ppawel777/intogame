@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 import { useEffect, useState } from 'react'
-import { Button, Flex, Form, FormProps, Input, InputNumber, Modal, message } from 'antd'
+import { Button, Flex, Form, FormProps, Input, Modal, message } from 'antd'
 import { supabase } from '@supabaseDir/supabaseClient'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@context/providers/AuthProvider/AuthProvider'
@@ -17,14 +17,10 @@ const LoginPage = () => {
 
    const [messageApi, contextHolder] = message.useMessage()
    const [form] = Form.useForm()
-   const [isRegistering, setIsRegistering] = useState(false)
    const [loading, setLoading] = useState(false)
-   const [submitTime, setSubmitTime] = useState<number | null>(null)
    const [showForgotPassword, setShowForgotPassword] = useState<string | false>(false)
    const [isResetModalOpen, setIsResetModalOpen] = useState(false)
    const [resetEmail, setResetEmail] = useState<string>('')
-
-   const [honeypotName] = useState('custom_field_' + Math.random().toString(36).substr(2, 9))
 
    // Проверка recovery-ссылки при загрузке
    useEffect(() => {
@@ -40,10 +36,6 @@ const LoginPage = () => {
       }
    }, [])
 
-   useEffect(() => {
-      setSubmitTime(Date.now())
-   }, [isRegistering])
-
    const from = location.state?.from || '/'
 
    const handleSignIn = (session: Session) => {
@@ -57,36 +49,13 @@ const LoginPage = () => {
 
    const handleAuth = async (values: any) => {
       setLoading(true)
-      console.log('signup OK, navigating to /confirmed', values.email)
       try {
-         if (isRegistering) {
-            const { error } = await supabase.auth.signUp({
-               email: values.email,
-               password: values.password,
-               options: {
-                  data: {
-                     user_name: values.user_name,
-                     user_phone: values.phone,
-                  },
-               },
-            })
-
-            if (error) throw error
-
-            // Запись в public.users теперь создаётся триггером в БД (после вставки в auth.users)
-            // Поэтому на фронте ничего дополнительно не вставляем
-
-            // После успешной регистрации перенаправляем на страницу подтверждения
-            messageApi.success('Регистрация успешна! Проверьте почту для подтверждения email.')
-            navigate('/confirmed', { state: { email: values.email } })
-         } else {
-            const { data, error } = await supabase.auth.signInWithPassword({
-               email: values.email,
-               password: values.password,
-            })
-            if (error) throw error
-            data.session && handleSignIn(data.session)
-         }
+         const { data, error } = await supabase.auth.signInWithPassword({
+            email: values.email,
+            password: values.password,
+         })
+         if (error) throw error
+         data.session && handleSignIn(data.session)
       } catch (error: any) {
          const localizedMessage = localizeSupabaseError(error.message)
 
@@ -156,30 +125,7 @@ const LoginPage = () => {
    }
 
    const onFinish = (values: any) => {
-      // Honeypot
-      const unknownFields = Object.keys(values).filter(
-         (key) => !['email', 'password', 'confirm', 'user_name', 'phone', 'prefix'].includes(key),
-      )
-
-      for (const key of unknownFields) {
-         if (values[key]) return
-      }
-
-      // Time check
-      const now = Date.now()
-      const timeElapsed = now - (submitTime || now)
-      if (timeElapsed < 2000) {
-         message.warning('Подождите немного перед отправкой формы')
-         return
-      }
-
-      const resultValues = {
-         email: values.email,
-         password: values.password,
-         user_name: values.user_name,
-         phone: values.phone ? '+7' + values.phone : null,
-      }
-      handleAuth(resultValues)
+      handleAuth(values)
    }
 
    const layout: FormProps = {
@@ -222,7 +168,7 @@ const LoginPage = () => {
 
          <div className={s['wrap-login__block']}>
             <div className={s['wrap-login__block-header']}>
-               <h2>{isRegistering ? 'Регистрация' : 'Вход'}</h2>
+               <h2>Войти в игру</h2>
             </div>
             <div className={s['wrap-login__block-auth']}>
                <Form {...layout} form={form} className="login-form" name="auth_form" onFinish={onFinish}>
@@ -246,56 +192,6 @@ const LoginPage = () => {
                      <Input.Password size="large" placeholder="Пароль" minLength={6} />
                   </Form.Item>
 
-                  <Form.Item noStyle name={honeypotName}>
-                     <Input type="text" autoComplete="off" style={{ display: 'none' }} />
-                  </Form.Item>
-
-                  {isRegistering && (
-                     <>
-                        <Form.Item
-                           name="confirm"
-                           dependencies={['password']}
-                           hasFeedback
-                           label="Подтвердите пароль"
-                           rules={[
-                              { required: true, message: 'Подтвердите пароль' },
-                              ({ getFieldValue }) => ({
-                                 validator(_, value) {
-                                    if (!value || getFieldValue('password') === value) {
-                                       return Promise.resolve()
-                                    }
-                                    return Promise.reject(new Error('Пароли должны совпадать'))
-                                 },
-                              }),
-                           ]}
-                        >
-                           <Input.Password placeholder="Подтвердите пароль" minLength={6} />
-                        </Form.Item>
-
-                        <Form.Item
-                           name="user_name"
-                           label="Имя пользователя"
-                           rules={[{ required: true, message: 'Введите имя пользователя' }]}
-                           extra="Имя, которое будет отображаться в списке игроков"
-                        >
-                           <Input placeholder="Имя пользователя" />
-                        </Form.Item>
-
-                        <Form.Item name="phone" label="Телефон">
-                           <InputNumber
-                              addonBefore={
-                                 <Form.Item name="prefix" noStyle>
-                                    +7
-                                 </Form.Item>
-                              }
-                              style={{ width: '100%' }}
-                              minLength={10}
-                              maxLength={10}
-                           />
-                        </Form.Item>
-                     </>
-                  )}
-
                   {/* Кнопка "Восстановить пароль" */}
                   {showForgotPassword && (
                      <Form.Item wrapperCol={{ ...layout.wrapperCol }} label=" ">
@@ -312,13 +208,13 @@ const LoginPage = () => {
 
                   <Form.Item wrapperCol={{ ...layout.wrapperCol }} label=" ">
                      <Button block size="large" type="primary" htmlType="submit" loading={loading}>
-                        {isRegistering ? 'Зарегистрироваться' : 'Войти'}
+                        Войти
                      </Button>
                   </Form.Item>
 
                   <Form.Item wrapperCol={{ ...layout.wrapperCol }} label=" ">
-                     <Button block size="large" type="primary" onClick={() => setIsRegistering(!isRegistering)}>
-                        {isRegistering ? 'Уже есть аккаунт? Войти' : 'Нет аккаунта? Регистрация'}
+                     <Button block size="large" onClick={() => navigate('/register')}>
+                        Регистрация
                      </Button>
                   </Form.Item>
                </Form>

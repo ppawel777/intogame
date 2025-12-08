@@ -1,0 +1,52 @@
+.wrap-register {
+   display: flex;
+   justify-content: center;
+   align-items: center;
+   min-height: 100vh;
+   padding: 20px;
+   font-family: 'Roboto-Regular';
+
+   &__block {
+      width: 100%;
+      max-width: 600px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 32px;
+
+      &-header {
+         text-align: center;
+         margin-bottom: 24px;
+
+         h2 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+         }
+      }
+
+      &-content {
+         margin-top: 24px;
+
+         p {
+            color: #8c8c8c;
+            // font-size: 14px;
+            line-height: 22px;
+            text-align: center;
+            font-weight: 400;
+            margin: 0;
+            margin-bottom: 24px;
+         }
+
+         :global {
+            .ant-form-item-label > label {
+               color: #595959;
+               font-size: 14px;
+               line-height: 22px;
+               font-weight: 400;
+            }
+         }
+      }
+   }
+}
+

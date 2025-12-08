@@ -24,47 +24,61 @@ const AvatarProfile = () => {
    const [loading, setLoading] = useState(true) // стартуем с loading = true
    const [avatarUrl, setAvatarUrl] = useState<string>('')
    const [avatarLoading, setAvatarLoading] = useState(false)
+   const [userEmail, setUserEmail] = useState<string>('')
+
+   const fetchUserProfile = async () => {
+      try {
+         // Получаем сессию и пользователя
+         const {
+            data: { session },
+            error: authError,
+         } = await supabase.auth.getSession()
+         if (authError) throw authError
+         if (!session) throw new Error('Пользователь не авторизован')
+
+         const authUserId = session.user.id // UUID из auth.users
+         const email = session.user.email || ''
+         setUserEmail(email)
+
+         const { data: userData, error: userError } = await supabase
+            .from('users')
+            .select('id, user_name, avatar_url')
+            .eq('uuid', authUserId)
+            .maybeSingle()
+
+         if (userError) throw userError
+
+         // Если записи ещё нет в users (новый пользователь с подтверждённым email)
+         if (!userData) {
+            setUser({ id: 0, user_name: 'Гость' })
+            return
+         }
+
+         const name = userData.user_name?.trim() ? userData.user_name.trim() : 'Без имени'
+
+         setUser({ id: userData.id, user_name: name, avatar_url: userData.avatar_url })
+      } catch (error: any) {
+         console.error('Ошибка загрузки профиля:', error)
+         message.error('Не удалось загрузить профиль')
+         setUser({ id: 0, user_name: 'Гость' })
+      } finally {
+         setLoading(false)
+      }
+   }
 
    useEffect(() => {
-      const fetchUserProfile = async () => {
-         try {
-            // Получаем сессию и пользователя
-            const {
-               data: { session },
-               error: authError,
-            } = await supabase.auth.getSession()
-            if (authError) throw authError
-            if (!session) throw new Error('Пользователь не авторизован')
+      fetchUserProfile()
+   }, [])
 
-            const authUserId = session.user.id // UUID из auth.users
-
-            const { data: userData, error: userError } = await supabase
-               .from('users')
-               .select('id, user_name, avatar_url')
-               .eq('uuid', authUserId)
-               .maybeSingle()
-
-            if (userError) throw userError
-
-            // Если записи ещё нет в users (новый пользователь с подтверждённым email)
-            if (!userData) {
-               setUser({ id: 0, user_name: 'Гость' })
-               return
-            }
-
-            const name = userData.user_name?.trim() ? userData.user_name.trim() : 'Без имени'
-
-            setUser({ id: userData.id, user_name: name, avatar_url: userData.avatar_url })
-         } catch (error: any) {
-            console.error('Ошибка загрузки профиля:', error)
-            message.error('Не удалось загрузить профиль')
-            setUser({ id: 0, user_name: 'Гость' })
-         } finally {
-            setLoading(false)
-         }
+   useEffect(() => {
+      const handleAvatarUpdate = () => {
+         fetchUserProfile()
       }
 
-      fetchUserProfile()
+      window.addEventListener('avatarUpdated', handleAvatarUpdate)
+      return () => {
+         window.removeEventListener('avatarUpdated', handleAvatarUpdate)
+      }
    }, [])
 
    useEffect(() => {
@@ -75,12 +89,18 @@ const AvatarProfile = () => {
                const url = await get_avatar_url(user.avatar_url)
                if (url) {
                   setAvatarUrl(url)
+               } else {
+                  setAvatarUrl('')
                }
             } catch (error) {
                console.error('Ошибка загрузки аватара:', error)
+               setAvatarUrl('')
             } finally {
                setAvatarLoading(false)
             }
+         } else {
+            setAvatarUrl('')
+            setAvatarLoading(false)
          }
       }
 
@@ -105,8 +125,18 @@ const AvatarProfile = () => {
       return user.user_name.length > 20 ? user.user_name.slice(0, 20) + '...' : user.user_name
    }
 
-   const getInitials = (name: string) => {
-      return name.charAt(0).toUpperCase()
+   const getInitials = (text: string) => {
+      return text.charAt(0).toUpperCase()
+   }
+
+   const getInitialsForAvatar = () => {
+      if (!avatarUrl && user?.user_name) {
+         return getInitials(user.user_name)
+      }
+      if (!avatarUrl && userEmail) {
+         return getInitials(userEmail)
+      }
+      return null
    }
 
    const items: MenuProps['items'] = [
@@ -146,12 +176,15 @@ const AvatarProfile = () => {
                size="large"
                className={s.avatar}
                alt={user?.user_name || 'Пользователь'}
-               src={avatarUrl}
+               src={avatarUrl || undefined}
                style={{
-                  backgroundColor: !avatarUrl && user?.user_name ? getRandomColor(user.user_name) : undefined,
+                  backgroundColor:
+                     !avatarUrl && (user?.user_name || userEmail)
+                        ? getRandomColor(user?.user_name || userEmail || '')
+                        : undefined,
                }}
             >
-               {!avatarUrl && user?.user_name ? getInitials(user.user_name) : !user?.user_name ? <UserOutlined /> : null}
+               {!avatarUrl ? getInitialsForAvatar() || <UserOutlined /> : null}
             </Avatar>
          )}
       </Dropdown>

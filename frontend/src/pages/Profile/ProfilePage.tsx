@@ -183,6 +183,7 @@ const ProfilePage = () => {
                setImageUrl(url)
                await supabase.from('users').update({ avatar_url: filePath }).eq('id', internalUserId)
                messageApi.success('Аватар обновлён')
+               window.dispatchEvent(new Event('avatarUpdated'))
                onSuccess?.({}, file as any)
             }
          } catch (error: any) {
@@ -232,6 +233,7 @@ const ProfilePage = () => {
                                           await delete_avatar(authUserId)
                                           setImageUrl(null)
                                           messageApi.success('Фото удалено')
+                                          window.dispatchEvent(new Event('avatarUpdated'))
                                        } catch (error: any) {
                                           messageApi.error('Ошибка удаления: ' + error.message)
                                        }
