@@ -19,7 +19,7 @@ export const ActionButton = ({ game, userId, setLoading, refresh }: Props) => {
 
    if (!userId) return null
 
-   const { id, game_price, players_limit, confirmed_players_count, game_status, user_vote_status } = game
+   const { id, game_price, players_limit, players_min, confirmed_players_count, game_status, user_vote_status } = game
 
    const isFull = confirmed_players_count >= (players_limit || 0)
    const isActive = game_status === 'Активна' || !game_status
@@ -103,7 +103,7 @@ export const ActionButton = ({ game, userId, setLoading, refresh }: Props) => {
          }
 
          const actualQuantity = voteData.quantity
-         const pricePerPlayer = Math.ceil((game_price || 0) / (players_limit || 1))
+         const pricePerPlayer = Math.ceil((game_price || 0) / (players_min || 1))
          const totalContribution = pricePerPlayer * actualQuantity
 
          const response = await fetch('/api/create-payment', {

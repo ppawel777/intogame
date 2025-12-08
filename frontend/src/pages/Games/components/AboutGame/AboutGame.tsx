@@ -15,7 +15,17 @@ type GameDetailsProps = {
 }
 
 export const AboutGame = ({ game }: GameDetailsProps) => {
-   const { game_time, game_date, place_address, players_limit, id, game_price, reserved_count, confirmed_count } = game
+   const {
+      game_time,
+      game_date,
+      place_address,
+      players_limit,
+      players_min,
+      id,
+      game_price,
+      reserved_count,
+      confirmed_count,
+   } = game
 
    const [drawerUsers, setDrawerUsers] = useState({ open: false, id: 0 })
    // const [totalPlayers, setTotalPlayers] = useState(0)
@@ -75,7 +85,7 @@ export const AboutGame = ({ game }: GameDetailsProps) => {
 
             <Descriptions.Item label="Цена взноса">
                <Text style={{ color: 'green' }}>
-                  {players_limit && players_limit > 0 && game_price ? Math.ceil(game_price / players_limit) : '—'} ₽
+                  {players_min && players_min > 0 && game_price ? Math.ceil(game_price / players_min) : '—'} ₽
                </Text>
             </Descriptions.Item>
 

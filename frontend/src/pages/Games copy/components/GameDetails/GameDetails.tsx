@@ -20,6 +20,7 @@ export const GameDetails = ({ game }: GameDetailsProps) => {
       game_date,
       place_address,
       players_limit,
+      players_min,
       votes_count,
       id,
       game_price,
@@ -96,7 +97,7 @@ export const GameDetails = ({ game }: GameDetailsProps) => {
 
             <Descriptions.Item label="Цена взноса">
                <Text style={{ color: 'green' }}>
-                  {players_limit && players_limit > 0 && game_price ? Math.ceil(game_price / players_limit) : '—'} ₽
+                  {players_min && players_min > 0 && game_price ? Math.ceil(game_price / players_min) : '—'} ₽
                </Text>
             </Descriptions.Item>
 

@@ -119,8 +119,8 @@ export const GamesModal = ({ isOpen, onClose, games, date, userId }: GamesModalP
                         </div>
                         {game.game_status === 'Активна' && (
                            <Text style={{ color: 'green' }}>
-                              {game.players_limit && game.players_limit > 0 && game.game_price
-                                 ? Math.ceil(game.game_price / game.players_limit)
+                              {game.players_min && game.players_min > 0 && game.game_price
+                                 ? Math.ceil(game.game_price / game.players_min)
                                  : '—'}{' '}
                               ₽
                            </Text>
