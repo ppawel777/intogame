@@ -46,4 +46,5 @@ _Убедитесь, что создан /backend/.env файл_
 - docker compose --profile development down
 - docker compose --profile development logs backend / frontend
 - docker ps
-- docker logs frontend-dev-backend-1 --follow/tail -100
+- docker logs -n 100 frontend-deploy-backend-1
+- docker logs -f -n 100 frontend-deploy-backend-1

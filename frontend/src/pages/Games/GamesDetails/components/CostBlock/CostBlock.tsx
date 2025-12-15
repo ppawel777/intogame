@@ -6,6 +6,7 @@ import { Avatar, Collapse, Flex, Space, Typography } from 'antd'
 import { Rules } from './Rules/Rules'
 import { ActionButton } from '@pages/Games/components'
 import { GameType } from '@typesDir/gameTypes'
+import { getPricePerPlayer } from '@pages/Games/utils/price_utils'
 
 const { Text } = Typography
 
@@ -19,7 +20,8 @@ type Props = {
 }
 
 export const CostBlock = ({ game_price, players_min, game, setLoading, userId, refresh }: Props) => {
-   if (!game_price) return null
+   const pricePerPlayer = getPricePerPlayer(game_price, players_min)
+   if (!pricePerPlayer) return null
 
    return (
       <>
@@ -28,10 +30,7 @@ export const CostBlock = ({ game_price, players_min, game, setLoading, userId, r
             <Flex vertical gap={4}>
                <span style={{ fontWeight: '700' }}>Бронирование и оплата</span>
                <p>
-                  Стоимость игры -{' '}
-                  <Text style={{ color: 'green' }}>
-                     {players_min && players_min > 0 && game_price ? Math.ceil(game_price / players_min) : '—'} ₽
-                  </Text>
+                  Стоимость игры - <Text style={{ color: 'green' }}>{pricePerPlayer} ₽</Text>
                </p>
             </Flex>
          </Space>

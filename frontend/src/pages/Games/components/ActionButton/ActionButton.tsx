@@ -4,6 +4,7 @@ import { supabase } from '@supabaseDir/supabaseClient'
 
 import { GameType } from '@typesDir/gameTypes'
 import { extractErrorMessage } from '@pages/Games/utils/games_utils'
+import { getPricePerPlayer } from '@pages/Games/utils/price_utils'
 import payment_icon from '@img/iokassa-gray.svg'
 
 type Props = {
@@ -84,6 +85,11 @@ export const ActionButton = ({ game, userId, setLoading, refresh }: Props) => {
          return message.error('Оплата невозможна: статус не "ожидает оплаты"')
       }
 
+      const pricePerPlayer = getPricePerPlayer(game_price, players_min)
+      if (!pricePerPlayer) {
+         return message.error('Не удалось определить стоимость участия')
+      }
+
       setLoading(true)
       try {
          const returnUrl = `${window.location.origin}/#/games/reserved`
@@ -103,7 +109,6 @@ export const ActionButton = ({ game, userId, setLoading, refresh }: Props) => {
          }
 
          const actualQuantity = voteData.quantity
-         const pricePerPlayer = Math.ceil((game_price || 0) / (players_min || 1))
          const totalContribution = pricePerPlayer * actualQuantity
 
          const response = await fetch('/api/create-payment', {

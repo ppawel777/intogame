@@ -11,6 +11,11 @@ dotenv.config();
 
 const router = express.Router();
 
+const getPricePerPlayer = (gamePrice?: number | null, playersMin?: number | null) => {
+  if (!gamePrice || !playersMin || playersMin <= 0) return null;
+  return Math.ceil(gamePrice / playersMin);
+};
+
 const getConfig = () => {
   const shopId = process.env.YOOKASSA_SHOP_ID || '';
   const secretKey = process.env.YOOKASSA_SECRET_KEY || '';
@@ -108,9 +113,12 @@ router.post('/create-payment', async (req, res) => {
       return res.status(500).json({ error: 'Не удалось получить данные игры' });
     }
 
-    const totalGamePrice = game.game_price || 0;
-    const playersMin = game.players_min || 1;
-    const pricePerPlayer = Math.ceil(totalGamePrice / playersMin);
+    const pricePerPlayer = getPricePerPlayer(game.game_price, game.players_min);
+    if (!pricePerPlayer) {
+      logger.error('Не удалось вычислить цену за игрока', { game_price: game.game_price, players_min: game.players_min });
+      return res.status(500).json({ error: 'Не удалось определить стоимость участия' });
+    }
+
     const expectedAmount = pricePerPlayer * quantity;
 
     // Проверка соответствия суммы
