@@ -84,11 +84,67 @@ const ModalEditGame = ({ id, onClose, onSuccess }: Props) => {
       try {
          const { ...updateData } = values
 
+         // Проверяем изменение статуса на "Завершена" или "Отменена"
+         const statusChanged = initialValues?.game_status !== values.game_status
+         const shouldRefund = statusChanged && (values.game_status === 'Завершена' || values.game_status === 'Отменена')
+
+         // Обновляем игру
          const { error } = await supabase.from('games').update(updateData).eq('id', id)
 
          if (error) throw error
 
-         message.success('Игра обновлена')
+         // Выполняем массовый возврат если нужно
+         if (shouldRefund) {
+            message.loading({ content: 'Обработка возвратов...', key: 'refund', duration: 0 })
+
+            try {
+               const refundResponse = await fetch('/api/refund-game-completion', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                     gameId: id,
+                     gameStatus: values.game_status,
+                  }),
+               })
+
+               const refundData = await refundResponse.json()
+
+               if (!refundResponse.ok) {
+                  throw new Error(refundData.error || 'Ошибка при возврате средств')
+               }
+
+               message.destroy('refund')
+
+               // Показываем результаты возврата
+               if (refundData.successfulRefunds > 0) {
+                  const msg =
+                     `Возвраты выполнены: ${refundData.successfulRefunds} успешно, ` +
+                     `${refundData.failedRefunds} ошибок. Возвращено: ${refundData.totalRefunded.toFixed(2)} ₽`
+                  message.success({
+                     content: msg,
+                     duration: 8,
+                  })
+               } else if (refundData.totalPayments === 0) {
+                  message.info('Нет платежей для возврата')
+               } else {
+                  message.warning('Не удалось выполнить возвраты')
+               }
+
+               if (refundData.failedRefunds > 0) {
+                  console.error('Неудачные возвраты:', refundData.failed)
+               }
+            } catch (refundError: any) {
+               message.destroy('refund')
+               console.error('Ошибка возврата средств:', refundError)
+               message.error({
+                  content: `Игра обновлена, но возникла ошибка при возврате средств: ${refundError.message}`,
+                  duration: 10,
+               })
+            }
+         } else {
+            message.success('Игра обновлена')
+         }
+
          form.resetFields()
          onSuccess?.()
          onClose()

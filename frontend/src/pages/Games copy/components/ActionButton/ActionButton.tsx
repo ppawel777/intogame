@@ -104,7 +104,7 @@ export const ActionButton = ({ game, isArchive, userId, setLoading, refresh }: P
          }
 
          const actualQuantity = voteData.quantity
-         const pricePerPlayer = Math.ceil((game_price || 0) / (players_limit || 1))
+         const pricePerPlayer = Math.ceil((game_price || 0) / (players_min || 1))
          const totalContribution = pricePerPlayer * actualQuantity
 
          const response = await fetch('/api/create-payment', {

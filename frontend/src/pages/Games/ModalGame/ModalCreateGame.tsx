@@ -3,6 +3,7 @@ import FormComponent from '../components/FormComponent/FormComponent'
 import { supabase } from '@supabaseDir/supabaseClient'
 import { useState } from 'react'
 import { GameFormValuesType } from '@typesDir/gameTypes'
+import { useUserId } from '@utils/hooks/useUserId'
 
 type Props = {
    onClose: () => void
@@ -12,13 +13,20 @@ type Props = {
 const ModalCreateGame = ({ onClose, onSuccess }: Props) => {
    const [form] = Form.useForm()
    const [loading, setLoading] = useState(false)
+   const { userId } = useUserId()
 
    const handleCreate = async (values: GameFormValuesType) => {
+      if (!userId) {
+         message.error('Необходимо авторизоваться для создания игры')
+         return
+      }
+
       setLoading(true)
       try {
          const gameData = {
             ...values,
             game_status: values.game_status || 'Активна',
+            creator_id: userId,
          }
 
          const { error } = await supabase.from('games').insert([gameData])

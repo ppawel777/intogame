@@ -11,6 +11,11 @@ dotenv.config();
 
 const router = express.Router();
 
+const getPricePerPlayer = (gamePrice?: number | null, playersMin?: number | null) => {
+  if (!gamePrice || !playersMin || playersMin <= 0) return null;
+  return Math.ceil(gamePrice / playersMin);
+};
+
 const getConfig = () => {
   const shopId = process.env.YOOKASSA_SHOP_ID || '';
   const secretKey = process.env.YOOKASSA_SECRET_KEY || '';
@@ -99,7 +104,7 @@ router.post('/create-payment', async (req, res) => {
     // Получаем цену игры и рассчитываем взнос
     const { data: game, error: gameError } = await supabaseAdmin
       .from('games')
-      .select('game_price, players_limit')
+      .select('game_price, players_min')
       .eq('id', gameId)
       .single();
 
@@ -108,9 +113,12 @@ router.post('/create-payment', async (req, res) => {
       return res.status(500).json({ error: 'Не удалось получить данные игры' });
     }
 
-    const totalGamePrice = game.game_price || 0;
-    const playersLimit = game.players_limit || 1;
-    const pricePerPlayer = Math.ceil(totalGamePrice / playersLimit);
+    const pricePerPlayer = getPricePerPlayer(game.game_price, game.players_min);
+    if (!pricePerPlayer) {
+      logger.error('Не удалось вычислить цену за игрока', { game_price: game.game_price, players_min: game.players_min });
+      return res.status(500).json({ error: 'Не удалось определить стоимость участия' });
+    }
+
     const expectedAmount = pricePerPlayer * quantity;
 
     // Проверка соответствия суммы
@@ -461,6 +469,267 @@ router.post('/refund-payment', async (req, res) => {
 
   } catch (error: any) {
     logger.error('Ошибка при возврате:', error);
+    return res.status(500).json({
+      error: 'Внутренняя ошибка сервера',
+      детали: error.message,
+    });
+  }
+});
+
+// POST /api/refund-game-completion - массовый возврат при завершении/отмене игры
+router.post('/refund-game-completion', async (req, res) => {
+  const logger = createLogger('refund-game-completion');
+  try {
+    const { gameId, gameStatus } = req.body || {};
+
+    if (!gameId) {
+      return res.status(400).json({ error: 'Требуется gameId' });
+    }
+
+    if (!gameStatus || !['Завершена', 'Отменена'].includes(gameStatus)) {
+      return res.status(400).json({ error: 'Недопустимый статус игры' });
+    }
+
+    // Получаем данные игры
+    const { data: game, error: gameError } = await supabaseAdmin
+      .from('games')
+      .select('game_price, players_limit, players_min')
+      .eq('id', gameId)
+      .single();
+
+    if (gameError || !game) {
+      logger.error('Не удалось получить данные игры:', gameError);
+      return res.status(404).json({ error: 'Игра не найдена' });
+    }
+
+    const { game_price, players_limit, players_min } = game;
+
+    // Получаем все votes со статусом 'confirmed' для этой игры
+    const { data: confirmedVotes, error: votesError } = await supabaseAdmin
+      .from('votes')
+      .select('id, user_id, quantity')
+      .eq('game_id', gameId)
+      .eq('status', 'confirmed');
+
+    if (votesError) {
+      logger.error('Ошибка получения голосов:', votesError);
+      return res.status(500).json({ error: 'Не удалось получить список участников' });
+    }
+
+    if (!confirmedVotes || confirmedVotes.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: 'Нет подтвержденных участников для возврата',
+        refunds: [],
+      });
+    }
+
+    // Получаем payment_id для каждого vote
+    const voteIds = confirmedVotes.map(v => v.id);
+    const { data: payments, error: paymentsError } = await supabaseAdmin
+      .from('payments')
+      .select('id, vote_id, amount, status')
+      .in('vote_id', voteIds)
+      .eq('status', 'succeeded');
+
+    if (paymentsError) {
+      logger.error('Ошибка получения платежей:', paymentsError);
+      return res.status(500).json({ error: 'Не удалось получить список платежей' });
+    }
+
+    if (!payments || payments.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: 'Нет успешных платежей для возврата',
+        refunds: [],
+      });
+    }
+
+    // Рассчитываем сумму возврата для каждого
+    const confirmedCount = confirmedVotes.reduce((sum, v) => sum + (v.quantity || 1), 0);
+    
+    let refundResults: any[] = [];
+    let totalRefunded = 0;
+    let failedRefunds: any[] = [];
+
+    const { shopId, secretKey } = getConfig();
+    if (!shopId || !secretKey) {
+      return res.status(500).json({ error: 'Сервис оплаты временно недоступен' });
+    }
+
+    const auth = Buffer.from(`${shopId}:${secretKey}`).toString('base64');
+
+    // Определяем логику возврата
+    const isFullRefund = gameStatus === 'Отменена' || confirmedCount < (players_min || 0);
+
+    logger.log(`Обработка возвратов для игры #${gameId}`, {
+      gameStatus,
+      confirmedCount,
+      players_min,
+      isFullRefund,
+      paymentsCount: payments.length,
+    });
+
+    // Обрабатываем каждый платеж
+    for (const payment of payments) {
+      try {
+        const vote = confirmedVotes.find(v => v.id === payment.vote_id);
+        if (!vote) continue;
+
+        const paidAmount = payment.amount;
+        let refundAmount = 0;
+
+        if (isFullRefund) {
+          // Полный возврат
+          refundAmount = paidAmount;
+        } else {
+          // Частичный возврат (игра завершена успешно)
+          const pricePerPlayerPaid = Math.ceil((game_price || 0) / (players_min || 1));
+          const actualPricePerPlayer = (game_price || 0) / confirmedCount;
+          const quantity = vote.quantity || 1;
+          
+          const shouldHavePaid = actualPricePerPlayer * quantity;
+          const actuallyPaid = pricePerPlayerPaid * quantity;
+          
+          refundAmount = Math.max(0, actuallyPaid - shouldHavePaid);
+        }
+
+        // Округляем до 2 знаков
+        refundAmount = Math.round(refundAmount * 100) / 100;
+
+        // Если сумма возврата слишком мала, пропускаем
+        if (refundAmount < 0.01) {
+          logger.log(`Возврат для платежа ${payment.id} пропущен (сумма < 0.01)`, {
+            paidAmount,
+            refundAmount,
+          });
+          continue;
+        }
+
+        // Проверяем доступность средств для возврата
+        let yookassaPayment;
+        try {
+          yookassaPayment = await getClient().getPayment(payment.id);
+        } catch (err: any) {
+          logger.error(`Не удалось получить платеж ${payment.id}:`, err?.response?.data || err.message);
+          failedRefunds.push({
+            paymentId: payment.id,
+            userId: vote.user_id,
+            error: 'Платёж не найден в YooKassa',
+          });
+          continue;
+        }
+
+        const refundableStr = yookassaPayment.refundable_amount?.value || yookassaPayment.amount?.value;
+        const refundableMax = parseAmountValue(refundableStr);
+
+        if (refundableMax <= 0) {
+          logger.warn(`Нет средств для возврата по платежу ${payment.id}`);
+          failedRefunds.push({
+            paymentId: payment.id,
+            userId: vote.user_id,
+            error: 'Нет средств для возврата',
+          });
+          continue;
+        }
+
+        // Корректируем сумму возврата если превышает доступную
+        const actualRefundAmount = Math.min(refundAmount, refundableMax);
+        const formattedAmount = actualRefundAmount.toFixed(2);
+        const idempotencyKey = randomUUID();
+
+        logger.log(`Создание возврата для платежа ${payment.id}:`, {
+          userId: vote.user_id,
+          paidAmount,
+          refundAmount: actualRefundAmount,
+          isFullRefund,
+        });
+
+        // Выполняем возврат
+        const response = await fetch('https://api.yookassa.ru/v3/refunds', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Idempotence-Key': idempotencyKey,
+            'Authorization': `Basic ${auth}`,
+          },
+          body: JSON.stringify({
+            payment_id: payment.id,
+            amount: { value: formattedAmount, currency: 'RUB' },
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: 'Не удалось расшифровать ответ' }));
+          logger.error(`Ошибка от YooKassa при возврате ${payment.id}:`, errorData);
+          failedRefunds.push({
+            paymentId: payment.id,
+            userId: vote.user_id,
+            error: errorData.description || 'Ошибка YooKassa',
+          });
+          continue;
+        }
+
+        const refund = await response.json();
+
+        // Обновляем запись в payments
+        await supabaseAdmin
+          .from('payments')
+          .update({
+            refunded_amount: parseFloat(refund.amount.value),
+            refunded_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            status: isFullRefund ? 'canceled' : 'succeeded',
+          })
+          .eq('id', payment.id);
+
+        // Обновляем статус vote если полный возврат
+        if (isFullRefund) {
+          await supabaseAdmin
+            .from('votes')
+            .update({ status: 'cancelled' })
+            .eq('id', payment.vote_id);
+        }
+
+        refundResults.push({
+          paymentId: payment.id,
+          userId: vote.user_id,
+          refundAmount: actualRefundAmount,
+          refundId: refund.id,
+          success: true,
+        });
+
+        totalRefunded += actualRefundAmount;
+
+      } catch (error: any) {
+        logger.error(`Ошибка обработки платежа ${payment.id}:`, error);
+        failedRefunds.push({
+          paymentId: payment.id,
+          error: error.message || 'Неизвестная ошибка',
+        });
+      }
+    }
+
+    const summary = {
+      success: true,
+      gameId,
+      gameStatus,
+      isFullRefund,
+      totalParticipants: confirmedVotes.length,
+      totalPayments: payments.length,
+      successfulRefunds: refundResults.length,
+      failedRefunds: failedRefunds.length,
+      totalRefunded,
+      refunds: refundResults,
+      failed: failedRefunds,
+    };
+
+    logger.log('Завершена обработка возвратов:', summary);
+
+    return res.status(200).json(summary);
+
+  } catch (error: any) {
+    logger.error('Ошибка при массовом возврате:', error);
     return res.status(500).json({
       error: 'Внутренняя ошибка сервера',
       детали: error.message,
