@@ -121,6 +121,7 @@ export const PlayersList = ({ gameId, confirmed_players_count, players_limit }: 
          onClick={(event) => {
             event.stopPropagation()
          }}
+         disabled
          icon={<MessageOutlined style={{ fontSize: '16px', outline: 'none!important', border: 'none!important' }} />}
       >
          {!isMobile && 'Чат с игроками'}
