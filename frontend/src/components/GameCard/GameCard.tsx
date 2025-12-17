@@ -41,6 +41,8 @@ export const GameCard = ({ game, userId, onEdit, setLoading, refresh, navigateSt
       players_min,
       game_price,
       creator_id,
+      is_active,
+      game_status,
    } = game
 
    const [start, end] = game_time || ['', '']
@@ -66,7 +68,12 @@ export const GameCard = ({ game, userId, onEdit, setLoading, refresh, navigateSt
                <Text className={s.timeText}>{formattedTime}</Text>
             </div>
             <div className={s.statusSection}>
-               <CardExtra confirmedCount={confirmed_count} playersLimit={players_limit} />
+               <CardExtra
+                  confirmedCount={confirmed_count}
+                  playersLimit={players_limit}
+                  isActive={is_active}
+                  gameStatus={game_status}
+               />
             </div>
          </Col>
 
