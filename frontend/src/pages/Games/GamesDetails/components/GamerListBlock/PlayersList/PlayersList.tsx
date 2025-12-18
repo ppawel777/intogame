@@ -7,6 +7,7 @@ import { get_avatar_url } from '@utils/storage'
 import { getRandomColor } from '@utils/colors'
 import { useIsMobile } from '@utils/hooks/useIsMobile'
 import { CheckCircleOutlined, MessageOutlined } from '@ant-design/icons'
+import { DrawerChat } from './DrawerChat'
 
 import s from './PlayersList.module.scss'
 
@@ -27,14 +28,16 @@ type Props = {
    gameId: number
    confirmed_players_count: number | null
    players_limit: number | null
+   game_status?: string | null
 }
 
-export const PlayersList = ({ gameId, confirmed_players_count, players_limit }: Props) => {
+export const PlayersList = ({ gameId, confirmed_players_count, players_limit, game_status }: Props) => {
    const [players, setPlayers] = useState<Player[]>([])
    const [avatarUrls, setAvatarUrls] = useState<Record<string, string>>({})
    const [loading, setLoading] = useState(true)
    const [modalVisible, setModalVisible] = useState(false)
    const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
+   const [chatOpen, setChatOpen] = useState(false)
    const isMobile = useIsMobile()
 
    useEffect(() => {
@@ -120,8 +123,9 @@ export const PlayersList = ({ gameId, confirmed_players_count, players_limit }: 
       <Button
          onClick={(event) => {
             event.stopPropagation()
+            setChatOpen(true)
          }}
-         disabled
+         disabled={game_status !== 'Активна'}
          icon={<MessageOutlined style={{ fontSize: '16px', outline: 'none!important', border: 'none!important' }} />}
       >
          {!isMobile && 'Чат с игроками'}
@@ -210,6 +214,8 @@ export const PlayersList = ({ gameId, confirmed_players_count, players_limit }: 
          >
             {selectedPlayer && <UserInfoContent user={selectedPlayer} />}
          </Modal>
+
+         <DrawerChat open={chatOpen} onClose={() => setChatOpen(false)} gameId={gameId} />
       </>
    )
 }

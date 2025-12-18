@@ -9,9 +9,17 @@ type Props = {
    players_limit: number | null
    gameId?: number
    creator_id?: number | null
+   game_status?: string | null
 }
 
-export const GamerListBlock = ({ confirmed_players_count, players_min, players_limit, gameId, creator_id }: Props) => {
+export const GamerListBlock = ({
+   confirmed_players_count,
+   players_min,
+   players_limit,
+   gameId,
+   creator_id,
+   game_status,
+}: Props) => {
    return (
       <>
          <Space size="middle">
@@ -28,6 +36,7 @@ export const GamerListBlock = ({ confirmed_players_count, players_min, players_l
                   gameId={gameId}
                   confirmed_players_count={confirmed_players_count}
                   players_limit={players_limit}
+                  game_status={game_status}
                />
             </div>
          )}

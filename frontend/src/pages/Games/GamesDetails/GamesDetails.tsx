@@ -110,6 +110,7 @@ const GamesDetails = () => {
                      players_min={game.players_min}
                      players_limit={game.players_limit}
                      gameId={game.id}
+                     game_status={game.game_status}
                   />
                </div>
                <div className={s.blockWrapper}>
