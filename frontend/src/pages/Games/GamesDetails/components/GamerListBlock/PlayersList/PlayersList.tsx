@@ -201,7 +201,8 @@ export const PlayersList = ({ gameId, confirmed_players_count, players_limit, ga
             open={modalVisible}
             onCancel={() => setModalVisible(false)}
             footer={null}
-            width={400}
+            width={isMobile ? '100%' : 400}
+            style={isMobile ? { top: 0, paddingBottom: 0 } : {}}
          >
             {selectedPlayer && <UserInfoContent user={selectedPlayer} />}
          </Modal>

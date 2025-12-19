@@ -20,4 +20,8 @@
    --secondary-font: 'Roboto-Medium';
    --bold-font: 'Roboto-Bold';
    --border-radius: 8px;
+   
+   // touch optimization
+   --touch-target-min-size: 44px;
+   --touch-target-spacing: 8px;
 }

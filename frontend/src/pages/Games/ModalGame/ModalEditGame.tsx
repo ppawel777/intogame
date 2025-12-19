@@ -3,6 +3,7 @@ import FormComponent from '../components/FormComponent/FormComponent'
 import dayjs from 'dayjs'
 import { supabase } from '@supabaseDir/supabaseClient'
 import { useEffect, useState } from 'react'
+import { useIsMobile } from '@utils/hooks/useIsMobile'
 
 // Типы
 interface GameFormValues {
@@ -26,6 +27,7 @@ type Props = {
 const ModalEditGame = ({ id, onClose, onSuccess }: Props) => {
    const [form] = Form.useForm()
    const [loading, setLoading] = useState(false)
+   const isMobile = useIsMobile()
 
    // Получаем данные игры напрямую из БД (лучше, чем передавать gamesData)
    const [initialValues, setInitialValues] = useState<GameFormValues | null>(null)
@@ -181,8 +183,9 @@ const ModalEditGame = ({ id, onClose, onSuccess }: Props) => {
          onCancel={onClose}
          okText="Сохранить"
          cancelText="Отмена"
-         width="80vw"
-         style={{ top: 20 }}
+         width={isMobile ? '100%' : '80vw'}
+         style={isMobile ? { top: 0, paddingBottom: 0 } : { top: 20 }}
+         styles={{ body: { maxHeight: isMobile ? 'calc(100vh - 120px)' : 'auto', overflowY: 'auto' } }}
          // destroyOnClose
          maskClosable={false}
          confirmLoading={loadingData}
