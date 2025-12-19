@@ -1,6 +1,10 @@
 .placeName {
    font-size: 18px;
    font-weight: 700;
+
+   @media (max-width: 768px) {
+      font-size: 16px;
+   }
 }
 
 .placeAddress {
@@ -8,6 +12,10 @@
    padding-top: 4px;
    font-family: var(--secondary-font);
    color: var(--light-grey);
+
+   @media (max-width: 768px) {
+      font-size: 14px;
+   }
 }
 
 .placeImage {

@@ -9,10 +9,12 @@ import { set_cookie } from '@utils/auth'
 import { localizeSupabaseError } from '@utils/authErrors'
 
 import s from './RegisterPage.module.scss'
+import { useIsMobile } from '@utils/hooks/useIsMobile'
 
 const RegisterPage = () => {
    const navigate = useNavigate()
    const { signin } = useAuth()
+   const isMobile = useIsMobile()
    const [messageApi, contextHolder] = message.useMessage()
    const [form] = Form.useForm()
 
@@ -32,8 +34,8 @@ const RegisterPage = () => {
    const layout: FormProps = {
       colon: false,
       labelAlign: 'left',
-      labelCol: { span: 6 },
-      wrapperCol: { span: 14 },
+      labelCol: { span: isMobile ? 24 : 6 },
+      wrapperCol: { span: isMobile ? 24 : 14 },
    }
 
    // Шаг 1: Регистрация
@@ -208,7 +210,13 @@ const RegisterPage = () => {
                <h2>Регистрация</h2>
             </div>
 
-            <Steps current={currentStep} items={steps} style={{ marginBottom: '32px' }} />
+            <Steps
+               current={currentStep}
+               items={steps}
+               style={{ marginBottom: '32px' }}
+               direction={isMobile ? 'vertical' : 'horizontal'}
+               size={isMobile ? 'small' : 'default'}
+            />
 
             <div className={s['wrap-register__block-content']}>
                {/* Шаг 1: Форма регистрации */}

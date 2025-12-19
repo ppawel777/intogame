@@ -9,6 +9,7 @@ import { supabase } from '@supabaseDir/supabaseClient'
 import s from './GamesModal.module.scss'
 import { statusToBadgeType } from '@pages/CalendarGames/utils/helpers'
 import { formatDate, formatTime } from '@utils/formatDatetime'
+import { useIsMobile } from '@utils/hooks/useIsMobile'
 
 const { Text } = Typography
 
@@ -16,6 +17,7 @@ export const GamesModal = ({ isOpen, onClose, games, date, userId }: GamesModalP
    const [favoriteGames, setFavoriteGames] = useState<number[]>([])
    const [loading, setLoading] = useState(false)
    const navigate = useNavigate()
+   const isMobile = useIsMobile()
 
    const navigateState = { state: { from: { pathname: '/calendar-games', title: 'Календарь игр' } } }
 
@@ -76,7 +78,15 @@ export const GamesModal = ({ isOpen, onClose, games, date, userId }: GamesModalP
    }
 
    return (
-      <Modal title={date ? `Игры на ${date.format(formatDate)}` : ''} open={isOpen} onCancel={onClose} footer={null}>
+      <Modal
+         title={date ? `Игры на ${date.format(formatDate)}` : ''}
+         open={isOpen}
+         onCancel={onClose}
+         footer={null}
+         width={isMobile ? '100%' : 520}
+         style={isMobile ? { top: 0, paddingBottom: 0 } : {}}
+         styles={{ body: { maxHeight: isMobile ? 'calc(100vh - 120px)' : 'auto', overflowY: 'auto' } }}
+      >
          <ul className={s.modalList}>
             {games.map((game) => (
                <li key={game.id} className={s.modalItem}>

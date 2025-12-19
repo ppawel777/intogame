@@ -12,6 +12,11 @@ body {
     height: calc(100vh - 95px);
     overflow: auto;
     // overflow: hidden;
+    
+    @media (max-width: 768px) {
+      padding: 12px;
+      height: calc(100vh - 80px);
+    }
   }
   &-footer {
     padding: 14px;
@@ -19,6 +24,12 @@ body {
     flex-direction: column;
     align-items: center;
     background-color: #FFF;
+    text-align: center;
+    
+    @media (max-width: 768px) {
+      padding: 12px 8px;
+      font-size: 12px;
+    }
   }
 }
 

@@ -7,6 +7,7 @@ import { QuestionCircleOutlined } from '@ant-design/icons'
 import { DrawerUsersInfo } from '..'
 import { PlayersAvatars } from '@components/PlayersAvatars'
 import { formatDate, formatTime } from '@utils/formatDatetime'
+import { useIsMobile } from '@utils/hooks/useIsMobile'
 
 const { Text } = Typography
 
@@ -34,7 +35,7 @@ export const AboutGame = ({ game }: GameDetailsProps) => {
 
    const closeUsersDrawer = () => setDrawerUsers({ open: false, id: 0 })
 
-   const isMobile = window.innerWidth < 768
+   const isMobile = useIsMobile()
 
    return (
       <>

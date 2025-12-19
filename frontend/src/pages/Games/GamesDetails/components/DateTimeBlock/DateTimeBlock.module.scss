@@ -1,10 +1,19 @@
 .date {
    font-size: 14px;
    font-weight: 700;
+
+   @media (max-width: 768px) {
+      font-size: 13px;
+   }
 }
+
 .time {
    font-size: 15px;
    padding-top: 4px;
    font-family: var(--secondary-font);
    color: var(--light-grey);
+
+   @media (max-width: 768px) {
+      font-size: 14px;
+   }
 }

@@ -3,9 +3,9 @@
 import { Avatar, Button, Card, Collapse, List, Modal, Space, Tooltip } from 'antd'
 import { useEffect, useState } from 'react'
 import { supabase } from '@supabaseDir/supabaseClient'
-import { get_avatar_url } from '@utils/storage'
 import { getRandomColor } from '@utils/colors'
 import { useIsMobile } from '@utils/hooks/useIsMobile'
+import { useAvatars } from '@utils/hooks/useAvatars'
 import { CheckCircleOutlined, MessageOutlined } from '@ant-design/icons'
 import { DrawerChat } from './DrawerChat'
 
@@ -33,12 +33,14 @@ type Props = {
 
 export const PlayersList = ({ gameId, confirmed_players_count, players_limit, game_status }: Props) => {
    const [players, setPlayers] = useState<Player[]>([])
-   const [avatarUrls, setAvatarUrls] = useState<Record<string, string>>({})
    const [loading, setLoading] = useState(true)
    const [modalVisible, setModalVisible] = useState(false)
    const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
    const [chatOpen, setChatOpen] = useState(false)
    const isMobile = useIsMobile()
+
+   // Используем хук для загрузки аватарок с кэшированием
+   const avatarUrls = useAvatars(players.map((p) => p.avatar_url))
 
    useEffect(() => {
       const loadPlayers = async () => {
@@ -69,17 +71,6 @@ export const PlayersList = ({ gameId, confirmed_players_count, players_limit, ga
 
       loadPlayers()
    }, [gameId])
-
-   useEffect(() => {
-      players.forEach(async (player) => {
-         if (player.avatar_url) {
-            const url = await get_avatar_url(player.avatar_url)
-            if (url) {
-               setAvatarUrls((prev) => ({ ...prev, [player.avatar_url!]: url }))
-            }
-         }
-      })
-   }, [players])
 
    const getInitials = (name: string) => {
       return name.charAt(0).toUpperCase()
@@ -210,7 +201,8 @@ export const PlayersList = ({ gameId, confirmed_players_count, players_limit, ga
             open={modalVisible}
             onCancel={() => setModalVisible(false)}
             footer={null}
-            width={400}
+            width={isMobile ? '100%' : 400}
+            style={isMobile ? { top: 0, paddingBottom: 0 } : {}}
          >
             {selectedPlayer && <UserInfoContent user={selectedPlayer} />}
          </Modal>

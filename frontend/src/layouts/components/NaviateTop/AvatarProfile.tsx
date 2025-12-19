@@ -5,7 +5,7 @@ import { useAuth } from '@context/providers/AuthProvider/AuthProvider'
 import { delete_cookie } from '@utils/auth'
 import { useEffect, useState } from 'react'
 import { supabase } from '@supabaseDir/supabaseClient'
-import { get_avatar_url } from '@utils/storage'
+import { useAvatars, clearAvatarCache } from '@utils/hooks/useAvatars'
 
 import s from './NaviateTop.module.scss'
 import { getRandomColor } from '@utils/colors'
@@ -22,9 +22,10 @@ const AvatarProfile = () => {
 
    const [user, setUser] = useState<User | null>(null)
    const [loading, setLoading] = useState(true) // стартуем с loading = true
-   const [avatarUrl, setAvatarUrl] = useState<string>('')
-   const [avatarLoading, setAvatarLoading] = useState(false)
    const [userEmail, setUserEmail] = useState<string>('')
+
+   // Используем хук для загрузки аватарки с кэшированием
+   const avatarUrls = useAvatars(user?.avatar_url ? [user.avatar_url] : [])
 
    const fetchUserProfile = async () => {
       try {
@@ -81,36 +82,12 @@ const AvatarProfile = () => {
       }
    }, [])
 
-   useEffect(() => {
-      const loadAvatar = async () => {
-         if (user?.avatar_url) {
-            setAvatarLoading(true)
-            try {
-               const url = await get_avatar_url(user.avatar_url)
-               if (url) {
-                  setAvatarUrl(url)
-               } else {
-                  setAvatarUrl('')
-               }
-            } catch (error) {
-               console.error('Ошибка загрузки аватара:', error)
-               setAvatarUrl('')
-            } finally {
-               setAvatarLoading(false)
-            }
-         } else {
-            setAvatarUrl('')
-            setAvatarLoading(false)
-         }
-      }
-
-      loadAvatar()
-   }, [user?.avatar_url])
 
    const handleSignOut = () => {
       signout(() => {
          sessionStorage.clear()
          localStorage.clear()
+         clearAvatarCache() // Очищаем кэш аватарок при логауте
 
          delete_cookie('access_token')
          delete_cookie('refresh_token')
@@ -130,6 +107,7 @@ const AvatarProfile = () => {
    }
 
    const getInitialsForAvatar = () => {
+      const avatarUrl = user?.avatar_url ? avatarUrls[user.avatar_url] : undefined
       if (!avatarUrl && user?.user_name) {
          return getInitials(user.user_name)
       }
@@ -167,26 +145,24 @@ const AvatarProfile = () => {
       return <Skeleton.Avatar size="large" className={s.avatar} active />
    }
 
+   const avatarUrl = user?.avatar_url ? avatarUrls[user.avatar_url] : undefined
+
    return (
       <Dropdown menu={{ items }} trigger={['click']} disabled={loading}>
-         {avatarLoading ? (
-            <Skeleton.Avatar size="large" className={s.avatar} active />
-         ) : (
-            <Avatar
-               size="large"
-               className={s.avatar}
-               alt={user?.user_name || 'Пользователь'}
-               src={avatarUrl || undefined}
-               style={{
-                  backgroundColor:
-                     !avatarUrl && (user?.user_name || userEmail)
-                        ? getRandomColor(user?.user_name || userEmail || '')
-                        : undefined,
-               }}
-            >
-               {!avatarUrl ? getInitialsForAvatar() || <UserOutlined /> : null}
-            </Avatar>
-         )}
+         <Avatar
+            size="large"
+            className={s.avatar}
+            alt={user?.user_name || 'Пользователь'}
+            src={avatarUrl || undefined}
+            style={{
+               backgroundColor:
+                  !avatarUrl && (user?.user_name || userEmail)
+                     ? getRandomColor(user?.user_name || userEmail || '')
+                     : undefined,
+            }}
+         >
+            {!avatarUrl ? getInitialsForAvatar() || <UserOutlined /> : null}
+         </Avatar>
       </Dropdown>
    )
 }

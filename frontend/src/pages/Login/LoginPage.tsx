@@ -9,11 +9,13 @@ import { Session } from '@supabase/supabase-js'
 
 import s from './LoginPage.module.scss'
 import { localizeSupabaseError } from '@utils/authErrors'
+import { useIsMobile } from '@utils/hooks/useIsMobile'
 
 const LoginPage = () => {
    const navigate = useNavigate()
    const location = useLocation()
    const { signin } = useAuth()
+   const isMobile = useIsMobile()
 
    const [messageApi, contextHolder] = message.useMessage()
    const [form] = Form.useForm()
@@ -131,8 +133,8 @@ const LoginPage = () => {
    const layout: FormProps = {
       colon: false,
       labelAlign: 'left',
-      labelCol: { span: 8 },
-      wrapperCol: { span: 14 },
+      labelCol: { span: isMobile ? 24 : 8 },
+      wrapperCol: { span: isMobile ? 24 : 14 },
    }
 
    return (

@@ -8,9 +8,10 @@
       align-content: center;
       align-items: center;
       justify-content: center;
-      padding-bottom: 30px;
+      padding: 20px;
       &__block {
-         min-width: 30%;
+         width: 100%;
+         max-width: 500px;
          &-header {
             display: flex;
             align-content: center;
@@ -27,6 +28,11 @@
                color: #004c97;
                padding: 0;
                margin: 0;
+               
+               @media (max-width: 768px) {
+                  font-size: 32px;
+                  line-height: 40px;
+               }
             }
          }
          &-auth {
@@ -34,6 +40,10 @@
             background: var(--base-background);
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
             border-radius: var(--border-radius);
+            
+            @media (max-width: 768px) {
+               padding: 24px 20px 20px;
+            }
             
             p {
                color: #8c8c8c;

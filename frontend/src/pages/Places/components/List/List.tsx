@@ -3,7 +3,9 @@ import { LikeOutlined, MessageOutlined, StarOutlined } from '@ant-design/icons'
 import { Input, List, Skeleton, Space, message } from 'antd'
 import React, { useEffect, useState } from 'react'
 // import { Link } from 'react-router-dom'
+import profootball4 from '@img/profootball4.jpeg'
 import { supabase } from '@supabaseDir/supabaseClient'
+import { PlaceImage } from '@components/PlaceImage'
 
 import s from './List.module.scss'
 
@@ -61,7 +63,18 @@ const PlacesList = () => {
                         <IconText icon={LikeOutlined} text="156" key="list-vertical-like-o" />,
                         <IconText icon={MessageOutlined} text="2" key="list-vertical-message" />,
                      ]}
-                     extra={<img width={272} alt="logo" src={item.photo_link} />}
+                     extra={
+                        <PlaceImage
+                           src={profootball4}
+                           width={272}
+                           alt="logo"
+                           fixedHeight={false}
+                           preview={{
+                              mask: <div>Посмотреть</div>,
+                           }}
+                        />
+                     }
+                     // extra={<img width={272} alt="logo" src={item.photo_link} />}
                   >
                      {/* <List.Item.Meta title={<Link to={`${item.id}/`}>{item.name}</Link>} description={item.phone} /> */}
                      <List.Item.Meta title={item.name}></List.Item.Meta>
