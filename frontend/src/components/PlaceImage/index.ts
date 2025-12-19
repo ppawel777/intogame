@@ -1,0 +1,2 @@
+export { PlaceImage } from './PlaceImage'
+

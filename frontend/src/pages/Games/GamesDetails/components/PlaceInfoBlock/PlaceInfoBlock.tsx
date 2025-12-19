@@ -1,4 +1,5 @@
-import { Flex, Image } from 'antd'
+import { Flex } from 'antd'
+import { PlaceImage } from '@components/PlaceImage'
 
 import profootball1 from '@img/profootball1.jpeg'
 import profootball2 from '@img/profootball2.jpeg'
@@ -16,21 +17,21 @@ export const PlaceInfoBlock = () => {
 
    return (
       <Flex vertical gap={16}>
-         <Image.PreviewGroup>
+         <PlaceImage.PreviewGroup>
             <Flex wrap="wrap" gap={8}>
                {images.map((img, index) => (
-                  <Image
+                  <PlaceImage
                      key={index}
+                     height={100}
                      src={img}
                      alt={`Место ${index + 1}`}
-                     className={s.placeImage}
                      preview={{
                         mask: <div>Посмотреть</div>,
                      }}
                   />
                ))}
             </Flex>
-         </Image.PreviewGroup>
+         </PlaceImage.PreviewGroup>
          <div className={s.placeInfo}>
             <h3 className={s.placeInfoTitle}>О манеже</h3>
             <ul className={s.placeInfoList}>
