@@ -187,7 +187,7 @@ const RegisterPage = () => {
       })
    }
 
-   const steps = [
+   const stepsDesktop = [
       {
          title: 'Данные',
          icon: <UserOutlined />,
@@ -202,6 +202,20 @@ const RegisterPage = () => {
       },
    ]
 
+   const stepsMobile = [
+      {
+         icon: <UserOutlined />,
+      },
+      {
+         icon: <SafetyOutlined />,
+      },
+      {
+         icon: <CheckCircleOutlined />,
+      },
+   ]
+
+   const steps = isMobile ? stepsMobile : stepsDesktop
+
    return (
       <div className={s['wrap-register']}>
          {contextHolder}
@@ -213,8 +227,9 @@ const RegisterPage = () => {
             <Steps
                current={currentStep}
                items={steps}
+               className={s['wrap-register__steps']}
                style={{ marginBottom: '32px' }}
-               direction={isMobile ? 'vertical' : 'horizontal'}
+               direction="horizontal"
                size={isMobile ? 'small' : 'default'}
             />
 
