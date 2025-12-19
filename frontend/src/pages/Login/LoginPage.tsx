@@ -196,7 +196,10 @@ const LoginPage = () => {
 
                   {/* Кнопка "Восстановить пароль" */}
                   {showForgotPassword && (
-                     <Form.Item wrapperCol={{ ...layout.wrapperCol }} label=" ">
+                     <Form.Item
+                        wrapperCol={isMobile ? undefined : { ...layout.wrapperCol }}
+                        label={isMobile ? undefined : ' '}
+                     >
                         <Button
                            type="link"
                            style={{ padding: 0, height: 'auto', fontSize: '14px' }}
@@ -208,13 +211,19 @@ const LoginPage = () => {
                      </Form.Item>
                   )}
 
-                  <Form.Item wrapperCol={{ ...layout.wrapperCol }} label=" ">
+                  <Form.Item
+                     wrapperCol={isMobile ? undefined : { ...layout.wrapperCol }}
+                     label={isMobile ? undefined : ' '}
+                  >
                      <Button block size="large" type="primary" htmlType="submit" loading={loading}>
                         Войти
                      </Button>
                   </Form.Item>
 
-                  <Form.Item wrapperCol={{ ...layout.wrapperCol }} label=" ">
+                  <Form.Item
+                     wrapperCol={isMobile ? undefined : { ...layout.wrapperCol }}
+                     label={isMobile ? undefined : ' '}
+                  >
                      <Button block size="large" onClick={() => navigate('/register')}>
                         Регистрация
                      </Button>

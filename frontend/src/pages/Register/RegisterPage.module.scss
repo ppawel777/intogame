@@ -6,6 +6,10 @@
    padding: 20px;
    font-family: 'Roboto-Regular';
 
+   @media (max-width: 768px) {
+      min-height: auto;
+   }
+
    &__block {
       width: 100%;
       max-width: 600px;
@@ -46,12 +50,62 @@
             margin-bottom: 24px;
          }
 
+         @media (max-width: 768px) {
+            :global {
+               .ant-input::placeholder,
+               .ant-input-password input::placeholder {
+                  font-size: 16px !important;
+               }
+            }
+         }
+
          :global {
             .ant-form-item-label > label {
                color: #595959;
                font-size: 14px;
                line-height: 22px;
                font-weight: 400;
+            }
+         }
+      }
+   }
+
+   &__steps {
+      display: flex !important;
+      justify-content: center !important;
+      
+      @media (min-width: 769px) {
+         :global {
+            .ant-steps-item-title {
+               display: block !important;
+            }
+         }
+      }
+      
+      @media (max-width: 768px) {
+         // Принудительно делаем Steps горизонтальным
+         flex-direction: row !important;
+         
+         :global {
+            .ant-steps-item-title {
+               display: none !important;
+            }
+            
+            .ant-steps-item {
+               padding-inline-start: 0 !important;
+               flex: none !important;
+               display: inline-flex !important;
+               margin-right: 16px !important;
+            }
+            
+            .ant-steps-item-container {
+               display: flex !important;
+               justify-content: center !important;
+               flex-direction: row !important;
+            }
+            
+            .ant-steps-item-tail {
+               display: none !important;
             }
          }
       }
