@@ -2,7 +2,7 @@ import { Avatar, Collapse, Flex, Space } from 'antd'
 import { PhoneOutlined } from '@ant-design/icons'
 import { useEffect, useState } from 'react'
 import { supabase } from '@supabaseDir/supabaseClient'
-import { get_avatar_url } from '@utils/storage'
+import { useAvatars } from '@utils/hooks/useAvatars'
 import { getRandomColor } from '@utils/colors'
 import TelegramIcon from '@svg/telegram.svg'
 import WhatsAppIcon from '@svg/whatsapp.svg'
@@ -25,8 +25,10 @@ type Props = {
 
 export const Organizator = ({ gameId, creator_id }: Props) => {
    const [creator, setCreator] = useState<Player | null>(null)
-   const [avatarUrls, setAvatarUrls] = useState<Record<string, string>>({})
    const isMobile = useIsMobile()
+
+   // Используем хук для загрузки аватарки с кэшированием
+   const avatarUrls = useAvatars(creator?.avatar_url ? [creator.avatar_url] : [])
 
    useEffect(() => {
       const loadCreator = async () => {
@@ -48,13 +50,6 @@ export const Organizator = ({ gameId, creator_id }: Props) => {
 
             if (error) throw error
             setCreator(data)
-
-            if (data?.avatar_url) {
-               const url = await get_avatar_url(data.avatar_url)
-               if (url) {
-                  setAvatarUrls({ [data.avatar_url]: url })
-               }
-            }
          } catch (error) {
             console.error('Ошибка загрузки организатора:', error)
          }

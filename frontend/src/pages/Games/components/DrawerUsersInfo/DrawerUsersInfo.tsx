@@ -6,7 +6,7 @@ import { InfoCircleOutlined, MessageOutlined, UserOutlined } from '@ant-design/i
 
 import { UserFromGame } from '@typesDir/gameTypes'
 import { formatQtyText } from '@pages/Games/utils/games_utils'
-import { get_avatar_url } from '@utils/storage'
+import { useAvatars } from '@utils/hooks/useAvatars'
 
 const { Text } = Typography
 
@@ -18,19 +18,9 @@ type Props = {
 const DrawerUsersInfo = ({ id, onClose }: Props) => {
    const [loading, setLoading] = useState(true)
    const [usersList, setUsersList] = useState<UserFromGame[]>([])
-   const [avatarUrls, setAvatarUrls] = useState<Record<string, string>>({})
 
-   // Загрузка URL аватаров
-   useEffect(() => {
-      usersList.forEach(async (user) => {
-         if (user.avatar_url) {
-            const url = await get_avatar_url(user.avatar_url)
-            if (url) {
-               setAvatarUrls((prev) => ({ ...prev, [user.avatar_url || '']: url }))
-            }
-         }
-      })
-   }, [usersList])
+   // Используем хук для загрузки аватарок с кэшированием
+   const avatarUrls = useAvatars(usersList.map((u) => u.avatar_url))
 
    const getUsers = async () => {
       setLoading(true)

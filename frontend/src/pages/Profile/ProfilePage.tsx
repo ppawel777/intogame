@@ -22,6 +22,7 @@ import { StarOutlined, UploadOutlined } from '@ant-design/icons'
 import { useEffect, useState } from 'react'
 import { supabase } from '@supabaseDir/supabaseClient'
 import { delete_avatar, get_avatar_url, upload_avatar } from '@utils/storage'
+import { clearAvatarCache } from '@utils/hooks/useAvatars'
 import dayjs from 'dayjs'
 
 import s from './ProfilePage.module.scss'
@@ -179,6 +180,9 @@ const ProfilePage = () => {
 
             const filePath = await upload_avatar(file as File, authUserId)
             if (filePath) {
+               // Очищаем кэш чтобы загрузить свежую аватарку
+               clearAvatarCache()
+
                const url = await get_avatar_url(filePath)
                setImageUrl(url)
                await supabase.from('users').update({ avatar_url: filePath }).eq('id', internalUserId)
@@ -231,6 +235,10 @@ const ProfilePage = () => {
                                        try {
                                           if (!authUserId) throw new Error('Пользователь не авторизован')
                                           await delete_avatar(authUserId)
+
+                                          // Очищаем кэш после удаления
+                                          clearAvatarCache()
+
                                           setImageUrl(null)
                                           messageApi.success('Фото удалено')
                                           window.dispatchEvent(new Event('avatarUpdated'))

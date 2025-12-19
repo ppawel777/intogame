@@ -8,7 +8,7 @@ import {
    subscribeToGameChat,
    unsubscribeFromGameChat,
 } from '@api/gameChat'
-import { get_avatar_url } from '@utils/storage'
+import { useAvatars } from '@utils/hooks/useAvatars'
 import { getRandomColor } from '@utils/colors'
 import { useIsMobile } from '@utils/hooks/useIsMobile'
 
@@ -27,9 +27,11 @@ export const DrawerChat = ({ open, onClose, gameId }: Props) => {
    const [loading, setLoading] = useState(false)
    const [sending, setSending] = useState(false)
    const [messageText, setMessageText] = useState('')
-   const [avatarUrls, setAvatarUrls] = useState<Record<string, string>>({})
    const messagesEndRef = useRef<HTMLDivElement>(null)
    const isMobile = useIsMobile()
+
+   // Используем хук для загрузки аватарок с кэшированием
+   const avatarUrls = useAvatars(messages.map((m) => m.avatar_url))
 
    // Загрузка сообщений при открытии
    useEffect(() => {
@@ -56,18 +58,6 @@ export const DrawerChat = ({ open, onClose, gameId }: Props) => {
          unsubscribeFromGameChat(subscription)
       }
    }, [open, gameId])
-
-   // Загрузка аватаров
-   useEffect(() => {
-      messages.forEach(async (msg) => {
-         if (msg.avatar_url && !avatarUrls[msg.avatar_url]) {
-            const url = await get_avatar_url(msg.avatar_url)
-            if (url) {
-               setAvatarUrls((prev) => ({ ...prev, [msg.avatar_url!]: url }))
-            }
-         }
-      })
-   }, [messages])
 
    // Автоскролл вниз при новых сообщениях
    useEffect(() => {

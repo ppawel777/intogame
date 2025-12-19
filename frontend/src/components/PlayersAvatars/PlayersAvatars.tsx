@@ -1,7 +1,7 @@
 import { Avatar, Badge, Tooltip } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@supabaseDir/supabaseClient'
-import { get_avatar_url } from '@utils/storage'
+import { useAvatars } from '@utils/hooks/useAvatars'
 import { getRandomColor } from '@utils/colors'
 
 import s from './PlayersAvatars.module.scss'
@@ -21,10 +21,12 @@ type PlayersAvatarsProps = {
 
 export const PlayersAvatars = ({ gameId, size = 32 }: PlayersAvatarsProps) => {
    const [players, setPlayers] = useState<Player[]>([])
-   const [avatarUrls, setAvatarUrls] = useState<Record<string, string>>({})
    const [loading, setLoading] = useState(true)
    const [maxVisible, setMaxVisible] = useState(5)
    const containerRef = useRef<HTMLDivElement>(null)
+
+   // Используем хук для загрузки аватарок с кэшированием
+   const avatarUrls = useAvatars(players.map((p) => p.avatar_url))
 
    useEffect(() => {
       const loadPlayers = async () => {
@@ -53,17 +55,6 @@ export const PlayersAvatars = ({ gameId, size = 32 }: PlayersAvatarsProps) => {
 
       loadPlayers()
    }, [gameId])
-
-   useEffect(() => {
-      players.forEach(async (player) => {
-         if (player.avatar_url) {
-            const url = await get_avatar_url(player.avatar_url)
-            if (url) {
-               setAvatarUrls((prev) => ({ ...prev, [player.avatar_url!]: url }))
-            }
-         }
-      })
-   }, [players])
 
    useEffect(() => {
       const calculateMaxVisible = () => {
