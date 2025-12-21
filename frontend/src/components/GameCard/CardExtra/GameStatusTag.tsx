@@ -30,4 +30,3 @@ export const GameStatusTag = ({ isFull, isActive, gameStatus }: GameStatusTagPro
 
    return <Tag color="success">{tagContent}</Tag>
 }
-

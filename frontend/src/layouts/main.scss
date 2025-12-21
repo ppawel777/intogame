@@ -1,103 +1,103 @@
 body {
-  overflow: hidden;
-  margin: 0;
-  padding: 0;
+   overflow: hidden;
+   margin: 0;
+   padding: 0;
 }
 
 .wrap {
-  &-main {
-    padding: 16px;
-    display: flex;
-    width: 100%;
-    height: calc(100vh - 95px);
-    overflow: auto;
-    // overflow: hidden;
-    
-    @media (max-width: 768px) {
-      padding: 12px;
-      height: calc(100vh - 80px);
-    }
-  }
-  &-footer {
-    padding: 14px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background-color: #FFF;
-    text-align: center;
-    
-    @media (max-width: 768px) {
-      padding: 12px 8px;
-      font-size: 12px;
-    }
-  }
+   &-main {
+      padding: 16px;
+      display: flex;
+      width: 100%;
+      height: calc(100vh - 95px);
+      overflow: auto;
+      // overflow: hidden;
+
+      @media (max-width: 768px) {
+         padding: 12px;
+         height: calc(100vh - 80px);
+      }
+   }
+   &-footer {
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: #fff;
+      text-align: center;
+
+      @media (max-width: 768px) {
+         padding: 12px 8px;
+         font-size: 12px;
+      }
+   }
 }
 
 .mt-14 {
-  margin-top: 14px;
+   margin-top: 14px;
 }
 
 .mt-24 {
-  margin-top: 24px;
+   margin-top: 24px;
 }
 
 .pb-24 {
-  padding-bottom: 24px;
+   padding-bottom: 24px;
 }
 
 .ps-16 {
-  padding-left: 16px;
+   padding-left: 16px;
 }
 
 .mb-26px {
-  margin-bottom: 26px;
+   margin-bottom: 26px;
 }
 
 .p-8 {
-  padding: 8px;
-  margin: 0;
+   padding: 8px;
+   margin: 0;
 }
 
 .pt-8 {
-  padding-top: 8px;
+   padding-top: 8px;
 }
 
 .pb-8 {
-  padding-bottom: 8px;
+   padding-bottom: 8px;
 }
 
 .pt-16 {
-  padding-top: 16px;
+   padding-top: 16px;
 }
 
 .pt-24 {
-  padding-top: 24px;
+   padding-top: 24px;
 }
 
 .ps-8 {
-  padding-left: 8px;
+   padding-left: 8px;
 }
 
 .ps-16 {
-  padding-left: 16px;
+   padding-left: 16px;
 }
 
 .pe-16 {
-  padding-right: 16px;
+   padding-right: 16px;
 }
 
 .mt-22 {
-  margin-top: 22px;
+   margin-top: 22px;
 }
 
 .align-center {
-  display: flex;
-  align-content: center;
-  align-items: center;
+   display: flex;
+   align-content: center;
+   align-items: center;
 }
 
 .wrap-list__lists_spin {
-  display: block;
-  margin: 0 auto;
-  padding-top: 50px;
+   display: block;
+   margin: 0 auto;
+   padding-top: 50px;
 }

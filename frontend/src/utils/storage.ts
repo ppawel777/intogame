@@ -78,27 +78,27 @@ export const get_avatar_url = async (fileName: string | null): Promise<string | 
       // Если ошибка - пробуем альтернативные пути
       if (error && fileName.includes('/')) {
          const parts = fileName.split('/')
-         
+
          if (parts.length === 2) {
             const [folder, file] = parts
-            
+
             // Fallback 1: Если дубликат (uuid/uuid.ext), пробуем просто uuid.ext
             if (file.startsWith(folder)) {
                const fallbackResult = await supabase.storage.from(BUCKET_NAME).createSignedUrl(file, 3600)
-               
+
                if (!fallbackResult.error) {
                   console.log(`[get_avatar_url] ✅ Исправлен дубликат: ${fileName} -> ${file}`)
                   return fallbackResult.data.signedUrl
                }
             }
-            
+
             // Fallback 2: Пробуем новый формат uuid/avatar.ext
             const ext = file.split('.').pop()
             const newFormatPath = `${folder}/avatar.${ext}`
-            
+
             if (newFormatPath !== fileName) {
                const newFormatResult = await supabase.storage.from(BUCKET_NAME).createSignedUrl(newFormatPath, 3600)
-               
+
                if (!newFormatResult.error) {
                   console.log(`[get_avatar_url] ✅ Найден новый формат: ${fileName} -> ${newFormatPath}`)
                   return newFormatResult.data.signedUrl
@@ -108,7 +108,7 @@ export const get_avatar_url = async (fileName: string | null): Promise<string | 
       }
 
       if (error) throw error
-      
+
       return data.signedUrl
    } catch (error: any) {
       console.error(`[get_avatar_url] ❌ Файл не найден: ${fileName}`)

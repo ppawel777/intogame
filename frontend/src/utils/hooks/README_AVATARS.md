@@ -23,10 +23,10 @@ import { useAvatars } from '@utils/hooks/useAvatars'
 
 const MyComponent = () => {
    const [users, setUsers] = useState<User[]>([])
-   
+
    // Передаем массив путей к аватаркам
    const avatarUrls = useAvatars(users.map(u => u.avatar_url))
-   
+
    return (
       <>
          {users.map(user => (
@@ -52,7 +52,7 @@ useEffect(() => {
          .from('view_users_from_game')
          .select('id, user_name, avatar_url, ...')
          .eq('game_id', gameId)
-      
+
       setPlayers(data || [])
    }
    loadPlayers()
@@ -106,11 +106,13 @@ useEffect(() => {
 ## Производительность
 
 ### До оптимизации (100 пользователей)
+
 - 100 последовательных запросов
 - ~10-15 секунд загрузки
 - Каждая перерисовка = новая загрузка
 
 ### После оптимизации (100 пользователей)
+
 - 100 параллельных запросов
 - ~1-2 секунды при первой загрузке
 - 0 секунд при повторном использовании (кэш)
@@ -126,6 +128,7 @@ useEffect(() => {
 ## Миграция старого кода
 
 ### Было:
+
 ```typescript
 const [avatarUrls, setAvatarUrls] = useState<Record<string, string>>({})
 
@@ -134,7 +137,7 @@ useEffect(() => {
       if (player.avatar_url) {
          const url = await get_avatar_url(player.avatar_url)
          if (url) {
-            setAvatarUrls(prev => ({ ...prev, [player.avatar_url!]: url }))
+            setAvatarUrls((prev) => ({ ...prev, [player.avatar_url!]: url }))
          }
       }
    })
@@ -142,9 +145,9 @@ useEffect(() => {
 ```
 
 ### Стало:
+
 ```typescript
-const avatarUrls = useAvatars(players.map(p => p.avatar_url))
+const avatarUrls = useAvatars(players.map((p) => p.avatar_url))
 ```
 
 ✅ Проще, быстрее, с кэшем!
-

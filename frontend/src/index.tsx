@@ -8,9 +8,13 @@ import { BrowserRouter } from 'react-router-dom'
 import '@ant-design/v5-patch-for-react-19'
 
 import App from './App'
+import { registerServiceWorkerOnLoad } from './utils/registerServiceWorker'
 
 import './index.scss'
 import './layouts/main.scss'
+
+// Регистрируем Service Worker при загрузке
+registerServiceWorkerOnLoad()
 
 // @ts-ignore
 // const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose

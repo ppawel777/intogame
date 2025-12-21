@@ -57,13 +57,7 @@ export const sendGameChatMessage = async (gameId: number, message: string): Prom
  * Подписка на новые сообщения в чате (realtime)
  */
 export const subscribeToGameChat = (gameId: number, onNewMessage: (message: GameChatMessage) => void) => {
-   // eslint-disable-next-line no-console
-   console.log('[gameChat API] Creating realtime subscription for game:', gameId)
-
    const channel = supabase.channel(`game_chat_${gameId}`)
-
-   // eslint-disable-next-line no-console
-   console.log('[gameChat API] Channel created:', channel)
 
    channel.on(
       'postgres_changes',
@@ -74,9 +68,6 @@ export const subscribeToGameChat = (gameId: number, onNewMessage: (message: Game
          filter: `game_id=eq.${gameId}`,
       },
       async (payload) => {
-         // eslint-disable-next-line no-console
-         console.log('[gameChat API] Realtime event received:', payload)
-
          // Получаем полную информацию о сообщении из view
          const { data } = await supabase.from('view_game_chat_messages').select('*').eq('id', payload.new.id).single()
 
@@ -86,12 +77,10 @@ export const subscribeToGameChat = (gameId: number, onNewMessage: (message: Game
       },
    )
 
-   // eslint-disable-next-line no-console
-   console.log('[gameChat API] Event handler registered, subscribing...')
-
    channel.subscribe((status, err) => {
-      // eslint-disable-next-line no-console
-      console.log('[gameChat API] Subscription status changed:', status, 'error:', err)
+      if (err) {
+         console.error('[gameChat API] Subscription error:', err)
+      }
    })
 
    return channel

@@ -1,68 +1,72 @@
 @use './styles/variables/global';
 
-body, html {
-  overflow: hidden;
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  background-color: var(--base-background);
-  -webkit-tap-highlight-color: transparent;
+body,
+html {
+   overflow: hidden;
+   margin: 0;
+   padding: 0;
+   height: 100%;
+   background-color: var(--base-background);
+   -webkit-tap-highlight-color: transparent;
 
-  ::-webkit-scrollbar { 
+   ::-webkit-scrollbar {
       width: 0.6rem;
       height: 0.6rem;
    }
 
-  /* Track */
-  ::-webkit-scrollbar-track { background: white; }
+   /* Track */
+   ::-webkit-scrollbar-track {
+      background: white;
+   }
 
-  /* Handle */
-  ::-webkit-scrollbar-thumb {
-    background: #d5d6dc;
-    border-radius: 0.6rem;
-  }
+   /* Handle */
+   ::-webkit-scrollbar-thumb {
+      background: #d5d6dc;
+      border-radius: 0.6rem;
+   }
 
-  /* Handle on hover */
-  ::-webkit-scrollbar-thumb:hover { background: #c4c7c8; }
+   /* Handle on hover */
+   ::-webkit-scrollbar-thumb:hover {
+      background: #c4c7c8;
+   }
 }
 
 #wrap {
-  width: 100%;
-  margin: 0 auto;
-  box-sizing: border-box;
+   width: 100%;
+   margin: 0 auto;
+   box-sizing: border-box;
 }
 
 p {
-  padding: 0;
-  margin: 0;
+   padding: 0;
+   margin: 0;
 }
 
 // Touch optimization - минимальные размеры для кликабельных элементов
 @media (max-width: 768px) {
-  // Минимальные размеры для кликабельных элементов (рекомендация Apple/Google: 44x44px)
-  button:not(.ant-btn-sm):not(.ant-btn-xs):not(.ant-btn-icon-only),
-  a:not(.ant-btn-sm):not(.ant-btn-xs),
-  [role="button"]:not(.ant-btn-sm):not(.ant-btn-xs),
-  .ant-btn:not(.ant-btn-sm):not(.ant-btn-xs):not(.ant-btn-icon-only) {
-    min-height: var(--touch-target-min-size);
-    
-    // Для иконок и маленьких кнопок делаем исключение, но добавляем padding
-    &.ant-btn-icon-only {
-      min-width: var(--touch-target-min-size);
+   // Минимальные размеры для кликабельных элементов (рекомендация Apple/Google: 44x44px)
+   button:not(.ant-btn-sm):not(.ant-btn-xs):not(.ant-btn-icon-only),
+   a:not(.ant-btn-sm):not(.ant-btn-xs),
+   [role='button']:not(.ant-btn-sm):not(.ant-btn-xs),
+   .ant-btn:not(.ant-btn-sm):not(.ant-btn-xs):not(.ant-btn-icon-only) {
       min-height: var(--touch-target-min-size);
-    }
-  }
-  
-  // Увеличенные отступы между интерактивными элементами в формах
-  .ant-form-item {
-    margin-bottom: 20px;
-  }
-  
-  // Улучшенная читаемость на маленьких экранах
-  input,
-  textarea,
-  select {
-    font-size: 16px; // Предотвращает зум на iOS при фокусе
-  }
-}
 
+      // Для иконок и маленьких кнопок делаем исключение, но добавляем padding
+      &.ant-btn-icon-only {
+         min-width: var(--touch-target-min-size);
+         min-height: var(--touch-target-min-size);
+      }
+   }
+
+   // Увеличенные отступы между интерактивными элементами в формах
+   .ant-form-item {
+      margin-bottom: 20px;
+   }
+
+   // Улучшенная читаемость на маленьких экранах
+   input,
+   textarea,
+   select {
+      font-size: 16px; // Предотвращает зум на iOS при фокусе
+   }
+}

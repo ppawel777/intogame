@@ -82,7 +82,6 @@ const AvatarProfile = () => {
       }
    }, [])
 
-
    const handleSignOut = () => {
       signout(() => {
          sessionStorage.clear()

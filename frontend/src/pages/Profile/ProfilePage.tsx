@@ -27,6 +27,7 @@ import dayjs from 'dayjs'
 
 import s from './ProfilePage.module.scss'
 import { useIsMobile } from '@utils/hooks/useIsMobile'
+import { PushNotificationManager } from '@components/PushNotificationManager'
 
 const { Item } = Form
 
@@ -265,6 +266,9 @@ const ProfilePage = () => {
                            <Statistic title="Игр" value={3} />
                            <Statistic title="Рейтинг" value={4} suffix={<StarOutlined />} />
                         </Space>
+                        <div style={{ marginTop: '16px', width: '100%' }}>
+                           <PushNotificationManager />
+                        </div>
                      </Flex>
                   </Col>
                   <Col xs={24} sm={24} md={20}>
