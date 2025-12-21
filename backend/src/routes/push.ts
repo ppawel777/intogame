@@ -174,28 +174,73 @@ router.post('/send', async (req, res) => {
         );
         return { success: true, userId: sub.user_id };
       } catch (error: any) {
+        // Логируем полную информацию об ошибке
+        const errorDetails = {
+          message: error.message,
+          statusCode: error.statusCode,
+          statusCodeFromResponse: error.statusCodeFromResponse,
+          endpoint: sub.endpoint.substring(0, 80) + '...',
+          body: error.body,
+          headers: error.headers,
+          stack: error.stack?.split('\n').slice(0, 3).join('\n'),
+        };
+
         // Если подписка недействительна (410), удаляем её
-        if (error.statusCode === 410) {
-          logger.warn(`Подписка недействительна, удаляем: ${sub.id}`);
+        if (error.statusCode === 410 || error.statusCodeFromResponse === 410) {
+          logger.warn(`Подписка недействительна (410), удаляем: ${sub.id} для пользователя ${sub.user_id}`);
           await supabaseAdmin.from('push_subscriptions').delete().eq('id', sub.id);
         } else {
-          logger.error(`Ошибка отправки уведомления пользователю ${sub.user_id}:`, error);
+          // Логируем полную информацию об ошибке для диагностики
+          logger.error(`Ошибка отправки уведомления пользователю ${sub.user_id}:`, JSON.stringify(errorDetails, null, 2));
+          
+          // Дополнительно логируем, если есть специфичные коды ошибок
+          if (error.statusCode === 401 || error.statusCodeFromResponse === 401) {
+            logger.error('⚠️  Возможная проблема с VAPID ключами (401 Unauthorized)');
+          } else if (error.statusCode === 400 || error.statusCodeFromResponse === 400) {
+            logger.error('⚠️  Возможная проблема с форматом запроса (400 Bad Request)');
+          } else if (error.statusCode === 403 || error.statusCodeFromResponse === 403) {
+            logger.error('⚠️  Доступ запрещён (403 Forbidden) - проверь VAPID ключи');
+          } else if (error.statusCode === 404 || error.statusCodeFromResponse === 404) {
+            logger.error('⚠️  Endpoint не найден (404 Not Found) - подписка может быть недействительна');
+          } else if (error.statusCode === 413 || error.statusCodeFromResponse === 413) {
+            logger.error('⚠️  Payload слишком большой (413 Payload Too Large)');
+          }
         }
-        return { success: false, userId: sub.user_id, error: error.message };
+        
+        return { 
+          success: false, 
+          userId: sub.user_id, 
+          error: error.message,
+          statusCode: error.statusCode || error.statusCodeFromResponse,
+          details: error.body || errorDetails,
+        };
       }
     });
 
     const results = await Promise.allSettled(sendPromises);
     const successful = results.filter((r) => r.status === 'fulfilled' && r.value.success).length;
     const failed = results.length - successful;
+    
+    // Собираем детали ошибок для диагностики
+    const errors = results
+      .filter((r) => r.status === 'fulfilled' && !r.value.success)
+      .map((r) => ({
+        userId: r.value.userId,
+        error: r.value.error,
+      }));
 
     logger.log(`Отправлено уведомлений: ${successful} успешно, ${failed} ошибок`);
+    
+    if (failed > 0) {
+      logger.warn('Детали ошибок:', errors);
+    }
 
     res.json({
       success: true,
       sent: successful,
       failed,
       total: subscriptions.length,
+      ...(failed > 0 && { errors }), // Добавляем детали ошибок только если есть ошибки
     });
   } catch (error: any) {
     logger.error('Ошибка отправки push-уведомлений:', error);
