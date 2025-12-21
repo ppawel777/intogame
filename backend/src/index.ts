@@ -13,8 +13,23 @@ const app = express();
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const logger = createLogger('server');
 
+// Разрешаем оба варианта (http и https) для dev режима
+const allowedOrigins = process.env.NODE_ENV === 'production'
+  ? [process.env.FRONTEND_URL || 'https://intogame.ru']
+  : ['http://localhost:5173', 'https://localhost:5173', process.env.FRONTEND_URL].filter(Boolean);
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'https://localhost:5173',
+  origin: (origin, callback) => {
+    // В dev режиме разрешаем запросы без origin (например, из Postman)
+    if (!origin && process.env.NODE_ENV !== 'production') {
+      return callback(null, true);
+    }
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
 }));
 

@@ -152,7 +152,10 @@ router.post('/send', async (req, res) => {
       body,
       icon: icon || '/icon-192x192.png',
       badge: badge || '/icon-192x192.png',
-      data: data || {},
+      data: {
+        ...(data || {}),
+        url: url || '/',
+      },
       url: url || '/',
     });
 
