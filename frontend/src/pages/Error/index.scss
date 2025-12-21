@@ -4,7 +4,9 @@
       padding: 80px;
       line-height: 24px;
       font-weight: 400;
-      span { display: block; }
+      span {
+         display: block;
+      }
    }
    &__header {
       font-weight: 500;
@@ -18,7 +20,9 @@
       font-size: 20px;
       line-height: 28px;
    }
-   &__code-desc { padding: 32px 0; }
+   &__code-desc {
+      padding: 32px 0;
+   }
    &__action {
       max-height: calc(100vh - 350px);
       overflow: auto;
@@ -28,8 +32,12 @@
          font-size: 15px;
          font-weight: 600;
       }
-      .ant-collapse-header { padding-bottom: 0 !important; }
-      .ant-collapse-content-box { padding: 0 !important; }
+      .ant-collapse-header {
+         padding-bottom: 0 !important;
+      }
+      .ant-collapse-content-box {
+         padding: 0 !important;
+      }
       pre {
          margin: 0;
          width: 60vw;

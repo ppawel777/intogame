@@ -44,7 +44,9 @@
       "use-debounce": "^10.0.2",
       "vite": "^6.2.2",
       "vite-plugin-eslint": "^1.8.1",
-      "vite-plugin-mkcert": "^1.17.8"
+      "vite-plugin-mkcert": "^1.17.8",
+      "vite-plugin-pwa": "^0.21.1",
+      "workbox-window": "^7.1.0"
    },
    "dependencies": {
       "@ant-design/icons": "^6.0.0",

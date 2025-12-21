@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+build/
+dist/
+dev-dist/
+
+# Generated files
+*.config.js
+registerSW.js
+dev-sw.js
+workbox-*.js
+
+# PWA generated files
+sw.js
+manifest.webmanifest
+

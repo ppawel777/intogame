@@ -19,12 +19,12 @@
 }
 
 .placeImage {
-   width: 100%!important;
-   height: 100px!important;
+   width: 100% !important;
+   height: 100px !important;
    border-radius: 8px;
    cursor: pointer;
-   
+
    @media (max-width: 768px) {
-      height: 60px!important;
+      height: 60px !important;
    }
 }

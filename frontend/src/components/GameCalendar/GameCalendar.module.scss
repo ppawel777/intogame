@@ -22,23 +22,23 @@
 :global {
    .ant-picker-calendar {
       font-size: 12px;
-      
+
       .ant-picker-calendar-date {
          font-size: 12px;
       }
-      
+
       .ant-picker-calendar-date-content {
          font-size: 11px;
       }
-      
+
       .ant-picker-calendar-month-select,
       .ant-picker-calendar-year-select {
          font-size: 12px;
       }
       .ant-badge-status-text {
-         padding: 0!important;
+         padding: 0 !important;
          // margin: 0!important;
-         font-size: 13px!important;
+         font-size: 13px !important;
       }
    }
 }

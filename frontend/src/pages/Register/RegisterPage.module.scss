@@ -30,7 +30,7 @@
             margin: 0;
             font-size: 24px;
             font-weight: 600;
-            
+
             @media (max-width: 768px) {
                font-size: 20px;
             }
@@ -73,7 +73,7 @@
    &__steps {
       display: flex !important;
       justify-content: center !important;
-      
+
       @media (min-width: 769px) {
          :global {
             .ant-steps-item-title {
@@ -81,29 +81,29 @@
             }
          }
       }
-      
+
       @media (max-width: 768px) {
          // Принудительно делаем Steps горизонтальным
          flex-direction: row !important;
-         
+
          :global {
             .ant-steps-item-title {
                display: none !important;
             }
-            
+
             .ant-steps-item {
                padding-inline-start: 0 !important;
                flex: none !important;
                display: inline-flex !important;
                margin-right: 16px !important;
             }
-            
+
             .ant-steps-item-container {
                display: flex !important;
                justify-content: center !important;
                flex-direction: row !important;
             }
-            
+
             .ant-steps-item-tail {
                display: none !important;
             }
@@ -111,4 +111,3 @@
       }
    }
 }
-

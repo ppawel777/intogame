@@ -1,6 +1,8 @@
 .calendarWrap {
    width: 100%;
    :global {
-      .ant-picker-calendar { padding: 8px; }
+      .ant-picker-calendar {
+         padding: 8px;
+      }
    }
 }

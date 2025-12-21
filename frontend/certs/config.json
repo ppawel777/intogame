@@ -1,0 +1,10 @@
+{
+   "record": {
+      "hosts": ["localhost", "127.0.0.1", "172.18.0.3", "0.0.0.0"],
+      "hash": {
+         "key": "1c829fe29ff74fa457b07ba09529b03d762554209916f2c80e45541e7730be63",
+         "cert": "5a8f26679824b799b44d6e8d8b4c5c9e310123c76291be81c8123ca974371878"
+      }
+   },
+   "configFilePath": "/app/certs/config.json"
+}

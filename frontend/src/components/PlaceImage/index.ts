@@ -1,2 +1,1 @@
 export { PlaceImage } from './PlaceImage'
-
