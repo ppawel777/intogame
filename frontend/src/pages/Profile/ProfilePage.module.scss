@@ -49,6 +49,21 @@
             width: 100%;
             margin-top: 16px;
          }
+
+         // Исправление отображения Switch на мобильных
+         .ant-switch {
+            min-width: 44px !important;
+            height: 22px !important;
+
+            .ant-switch-handle {
+               width: 18px !important;
+               height: 18px !important;
+            }
+
+            &.ant-switch-checked .ant-switch-handle {
+               left: calc(100% - 18px - 2px) !important;
+            }
+         }
       }
    }
 }

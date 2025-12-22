@@ -42,12 +42,46 @@ p {
    margin: 0;
 }
 
+// Исправление отображения Switch на мобильных устройствах (iOS-стиль)
+@media (max-width: 768px) {
+   .ant-switch {
+      min-width: 51px !important;
+      height: 31px !important;
+      background-color: rgba(0, 0, 0, 0.25) !important;
+      border-radius: 15.5px !important;
+      transition: all 0.3s ease !important;
+
+      .ant-switch-handle {
+         width: 27px !important;
+         height: 27px !important;
+         top: 2px !important;
+         left: 2px !important;
+         border-radius: 50% !important;
+         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+         transition: all 0.3s ease !important;
+
+         &::before {
+            border-radius: 50% !important;
+         }
+      }
+
+      &.ant-switch-checked {
+         background-color: #34c759 !important; // iOS green
+
+         .ant-switch-handle {
+            left: calc(100% - 27px - 2px) !important;
+         }
+      }
+   }
+}
+
 // Touch optimization - минимальные размеры для кликабельных элементов
 @media (max-width: 768px) {
    // Минимальные размеры для кликабельных элементов (рекомендация Apple/Google: 44x44px)
-   button:not(.ant-btn-sm):not(.ant-btn-xs):not(.ant-btn-icon-only),
+   // Исключаем button[role="switch"] (Ant Design Switch), так как у него свои размеры
+   button:not(.ant-btn-sm):not(.ant-btn-xs):not(.ant-btn-icon-only):not([role='switch']),
    a:not(.ant-btn-sm):not(.ant-btn-xs),
-   [role='button']:not(.ant-btn-sm):not(.ant-btn-xs),
+   [role='button']:not(.ant-btn-sm):not(.ant-btn-xs):not([role='switch']),
    .ant-btn:not(.ant-btn-sm):not(.ant-btn-xs):not(.ant-btn-icon-only) {
       min-height: var(--touch-target-min-size);
 
