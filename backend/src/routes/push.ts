@@ -118,10 +118,13 @@ router.delete('/unsubscribe', async (req, res) => {
 router.post('/send', async (req, res) => {
   try {
     if (!isVapidConfigured) {
+      logger.error('Попытка отправить уведомление, но VAPID keys не настроены');
       return res.status(503).json({ error: 'Push-уведомления не настроены (VAPID keys отсутствуют)' });
     }
 
     const { userIds, title, body, icon, badge, data, url } = req.body;
+    
+    logger.log(`Запрос на отправку уведомления для пользователей: ${userIds?.join(', ') || 'не указаны'}, заголовок: "${title}"`);
 
     if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
       return res.status(400).json({ error: 'userIds должен быть непустым массивом' });
@@ -143,8 +146,11 @@ router.post('/send', async (req, res) => {
     }
 
     if (!subscriptions || subscriptions.length === 0) {
-      return res.json({ success: true, sent: 0, message: 'Нет активных подписок' });
+      logger.warn(`Нет активных подписок для пользователей: ${userIds.join(', ')}`);
+      return res.json({ success: true, sent: 0, failed: 0, total: 0, message: 'Нет активных подписок' });
     }
+
+    logger.log(`Найдено подписок для отправки: ${subscriptions.length} для пользователей: ${userIds.join(', ')}`);
 
     // Формируем payload для уведомления
     const payload = JSON.stringify({

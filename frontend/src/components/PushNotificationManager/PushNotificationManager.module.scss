@@ -1,0 +1,113 @@
+.pushNotificationManager {
+   width: 100%;
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   padding: 12px 0;
+
+   @media (max-width: 768px) {
+      padding: 8px 0;
+   }
+}
+
+.icon {
+   font-size: 18px;
+   margin-right: 8px;
+
+   @media (max-width: 768px) {
+      font-size: 16px;
+      margin-right: 6px;
+   }
+}
+
+.text {
+   flex: 1;
+   margin: 0;
+   font-size: 14px;
+
+   @media (max-width: 768px) {
+      font-size: 13px;
+   }
+}
+
+.switch {
+   // Стили для Switch, чтобы он выглядел как нативный iOS переключатель
+   :global(.ant-switch) {
+      min-width: 51px !important;
+      height: 31px !important;
+      background-color: rgba(0, 0, 0, 0.25) !important;
+      border-radius: 15.5px !important;
+      padding: 0 !important;
+      line-height: 31px !important;
+      transition: all 0.3s ease !important;
+
+      @media (max-width: 768px) {
+         min-width: 51px !important;
+         height: 31px !important;
+         border-radius: 15.5px !important;
+      }
+
+      :global(.ant-switch-handle) {
+         width: 27px !important;
+         height: 27px !important;
+         top: 2px !important;
+         left: 2px !important;
+         border-radius: 50% !important;
+         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+         transition: all 0.3s ease !important;
+
+         @media (max-width: 768px) {
+            width: 27px !important;
+            height: 27px !important;
+            top: 2px !important;
+            left: 2px !important;
+         }
+
+         &::before {
+            border-radius: 50% !important;
+         }
+      }
+
+      &:global(.ant-switch-checked) {
+         background-color: #34c759 !important; // iOS green color
+
+         :global(.ant-switch-handle) {
+            left: calc(100% - 27px - 2px) !important;
+            transform: none !important;
+         }
+      }
+
+      &:global(.ant-switch-loading) {
+         .ant-switch-handle {
+            &::before {
+               width: 14px !important;
+               height: 14px !important;
+            }
+         }
+      }
+   }
+}
+
+.container {
+   width: 100%;
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   gap: 12px;
+
+   @media (max-width: 768px) {
+      gap: 8px;
+   }
+}
+
+.leftSection {
+   display: flex;
+   align-items: center;
+   flex: 1;
+   min-width: 0;
+}
+
+.rightSection {
+   flex-shrink: 0;
+}
+

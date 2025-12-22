@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 // eslint-disable-next-line sort-imports
-import { message, Space, Switch, Typography } from 'antd'
+import { message, Switch, Typography } from 'antd'
 import { BellFilled, BellOutlined } from '@ant-design/icons'
 import { useUserId } from '@utils/hooks/useUserId'
 import { registerPushNotifications, unsubscribeFromPush } from '@utils/pushNotifications'
+import styles from './PushNotificationManager.module.scss'
 
 const { Text } = Typography
 
@@ -96,41 +97,67 @@ export const PushNotificationManager = () => {
 
    if (!userId) {
       return (
-         <Space>
-            <BellOutlined />
-            <Text type="secondary">Войдите, чтобы получать уведомления</Text>
-         </Space>
+         <div className={styles.container}>
+            <div className={styles.leftSection}>
+               <BellOutlined className={styles.icon} />
+               <Text type="secondary" className={styles.text}>
+                  Войдите, чтобы получать уведомления
+               </Text>
+            </div>
+         </div>
       )
    }
 
    if (!('Notification' in window)) {
       return (
-         <Space>
-            <BellOutlined />
-            <Text type="secondary">Ваш браузер не поддерживает уведомления</Text>
-         </Space>
+         <div className={styles.container}>
+            <div className={styles.leftSection}>
+               <BellOutlined className={styles.icon} />
+               <Text type="secondary" className={styles.text}>
+                  Ваш браузер не поддерживает уведомления
+               </Text>
+            </div>
+         </div>
       )
    }
 
    if (permission === 'denied') {
       return (
-         <Space direction="vertical" size="small">
-            <Space>
-               <BellOutlined style={{ color: '#ff4d4f' }} />
-               <Text type="danger">Уведомления заблокированы в настройках браузера</Text>
-            </Space>
-            <Text type="secondary" style={{ fontSize: '12px' }}>
-               Разблокируйте уведомления в настройках браузера
-            </Text>
-         </Space>
+         <div className={styles.container}>
+            <div className={styles.leftSection}>
+               <BellOutlined className={styles.icon} style={{ color: '#ff4d4f' }} />
+               <div style={{ flex: 1 }}>
+                  <Text type="danger" className={styles.text} style={{ display: 'block', marginBottom: '4px' }}>
+                     Уведомления заблокированы в настройках браузера
+                  </Text>
+                  <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>
+                     Разблокируйте уведомления в настройках браузера
+                  </Text>
+               </div>
+            </div>
+         </div>
       )
    }
 
    return (
-      <Space>
-         {isSubscribed ? <BellFilled style={{ color: '#52c41a' }} /> : <BellOutlined />}
-         <Text>Push-уведомления</Text>
-         <Switch checked={isSubscribed} onChange={handleToggle} loading={isLoading} disabled={false} />
-      </Space>
+      <div className={styles.container}>
+         <div className={styles.leftSection}>
+            {isSubscribed ? (
+               <BellFilled className={styles.icon} style={{ color: '#52c41a' }} />
+            ) : (
+               <BellOutlined className={styles.icon} />
+            )}
+            <Text className={styles.text}>Push-уведомления</Text>
+         </div>
+         <div className={styles.rightSection}>
+            <Switch
+               className={styles.switch}
+               checked={isSubscribed}
+               onChange={handleToggle}
+               loading={isLoading}
+               disabled={false}
+            />
+         </div>
+      </div>
    )
 }
