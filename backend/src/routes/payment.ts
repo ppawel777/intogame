@@ -136,6 +136,27 @@ router.post('/create-payment', async (req, res) => {
       });
     }
 
+    // Получаем email пользователя из БД
+    let userEmail: string | null = null;
+    if (userId) {
+      const { data: userData, error: userError } = await supabaseAdmin
+        .from('users')
+        .select('email')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (userError) {
+        logger.error('Ошибка получения email пользователя:', userError);
+      } else if (userData?.email) {
+        userEmail = userData.email;
+      }
+    }
+
+    if (!userEmail) {
+      logger.warn('Email пользователя не найден:', { userId });
+      return res.status(400).json({ error: 'Не удалось получить email пользователя' });
+    }
+
     // Создание платежа в YooKassa
     let yookassaPayment;
     try {
@@ -145,6 +166,24 @@ router.post('/create-payment', async (req, res) => {
           capture: true,
           description,
           confirmation: { type: 'redirect', return_url: confirmationReturnUrl },
+          receipt: {
+            customer: {
+              email: userEmail,
+            },
+            items: [
+              {
+                description: description || 'Оплата участия в игре',
+                quantity: String(quantity),
+                amount: {
+                  value,
+                  currency: 'RUB',
+                },
+                vat_code: '1',
+                payment_mode: 'full_payment',
+                payment_subject: 'service',
+              },
+            ],
+          },
           metadata: {
             ...metadata,
             vote_id: voteId,
