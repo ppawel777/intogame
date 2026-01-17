@@ -39,6 +39,7 @@ export default defineConfig({
          '@context': path.resolve(__dirname, './src/context'),
          '@pages': path.resolve(__dirname, './src/pages'),
          '@store': path.resolve(__dirname, './src/store'),
+         '@assets': path.resolve(__dirname, './src/assets'),
          '@img': path.resolve(__dirname, './src/static/img'),
          '@svg': path.resolve(__dirname, './src/static/svg'),
          '@utils': path.resolve(__dirname, './src/utils'),
