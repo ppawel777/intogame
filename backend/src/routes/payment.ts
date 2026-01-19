@@ -451,6 +451,69 @@ router.post('/refund-payment', async (req, res) => {
     const formattedAmount = valueToRefund.toFixed(2);
     const idempotencyKey = randomUUID();
 
+    // Получаем vote_id из платежа в БД или из metadata
+    let voteId: string | null = null;
+    const metadata = yookassaPayment.metadata || {};
+    if (metadata.vote_id) {
+      voteId = String(metadata.vote_id);
+    } else {
+      const { data: paymentData } = await supabaseAdmin
+        .from('payments')
+        .select('vote_id')
+        .eq('id', normalizedPaymentId)
+        .maybeSingle();
+      if (paymentData?.vote_id) {
+        voteId = String(paymentData.vote_id);
+      }
+    }
+
+    // Получаем данные для receipt
+    let userEmail: string | null = null;
+    let quantity = 1;
+    let descriptionText = yookassaPayment.description || 'Возврат оплаты участия в игре';
+
+    if (voteId) {
+      const { data: voteData } = await supabaseAdmin
+        .from('votes')
+        .select('user_id, quantity, game_id')
+        .eq('id', voteId)
+        .maybeSingle();
+
+      if (voteData) {
+        quantity = voteData.quantity || 1;
+        const userId = voteData.user_id;
+
+        // Получаем email пользователя
+        if (userId) {
+          const { data: userData } = await supabaseAdmin
+            .from('users')
+            .select('email')
+            .eq('id', userId)
+            .maybeSingle();
+          if (userData?.email) {
+            userEmail = userData.email;
+          }
+        }
+
+        // Получаем описание игры для receipt
+        if (voteData.game_id) {
+          const { data: gameData } = await supabaseAdmin
+            .from('games')
+            .select('id')
+            .eq('id', voteData.game_id)
+            .maybeSingle();
+          if (gameData) {
+            descriptionText = `Возврат оплаты участия в игре #${voteData.game_id}`;
+          }
+        }
+      }
+    }
+
+    if (!userEmail) {
+      logger.warn('Email пользователя не найден для возврата:', { paymentId: normalizedPaymentId, voteId });
+      return res.status(400).json({ error: 'Не удалось получить email пользователя для возврата' });
+    }
+
     logger.log('Создание возврата:', { paymentId: normalizedPaymentId, amount: formattedAmount });
 
     const { shopId, secretKey } = getConfig();
@@ -470,6 +533,24 @@ router.post('/refund-payment', async (req, res) => {
       body: JSON.stringify({
         payment_id: normalizedPaymentId,
         amount: { value: formattedAmount, currency: 'RUB' },
+        receipt: {
+          customer: {
+            email: userEmail,
+          },
+          items: [
+            {
+              description: descriptionText,
+              quantity: String(quantity),
+              amount: {
+                value: formattedAmount,
+                currency: 'RUB',
+              },
+              vat_code: '1',
+              payment_mode: 'full_payment',
+              payment_subject: 'service',
+            },
+          ],
+        },
       }),
     });
 
@@ -677,6 +758,32 @@ router.post('/refund-game-completion', async (req, res) => {
         const formattedAmount = actualRefundAmount.toFixed(2);
         const idempotencyKey = randomUUID();
 
+        // Получаем email пользователя для receipt
+        let userEmail: string | null = null;
+        if (vote.user_id) {
+          const { data: userData } = await supabaseAdmin
+            .from('users')
+            .select('email')
+            .eq('id', vote.user_id)
+            .maybeSingle();
+          if (userData?.email) {
+            userEmail = userData.email;
+          }
+        }
+
+        if (!userEmail) {
+          logger.warn(`Email пользователя не найден для возврата платежа ${payment.id}:`, { userId: vote.user_id });
+          failedRefunds.push({
+            paymentId: payment.id,
+            userId: vote.user_id,
+            error: 'Email пользователя не найден',
+          });
+          continue;
+        }
+
+        const quantity = vote.quantity || 1;
+        const descriptionText = `Возврат оплаты участия в игре #${gameId}`;
+
         logger.log(`Создание возврата для платежа ${payment.id}:`, {
           userId: vote.user_id,
           paidAmount,
@@ -695,6 +802,24 @@ router.post('/refund-game-completion', async (req, res) => {
           body: JSON.stringify({
             payment_id: payment.id,
             amount: { value: formattedAmount, currency: 'RUB' },
+            receipt: {
+              customer: {
+                email: userEmail,
+              },
+              items: [
+                {
+                  description: descriptionText,
+                  quantity: String(quantity),
+                  amount: {
+                    value: formattedAmount,
+                    currency: 'RUB',
+                  },
+                  vat_code: '1',
+                  payment_mode: 'full_payment',
+                  payment_subject: 'service',
+                },
+              ],
+            },
           }),
         });
 
