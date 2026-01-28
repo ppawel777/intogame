@@ -6,10 +6,11 @@ import PrivateRoute from './PrivateRoute'
 import MainLayout from '../layouts/MainLayout'
 import LoginRoute from './LoginRoute'
 import GamesRoutes from './GameRoutes'
+import RootRoute from './RootRoute'
 
 const LoginPage = lazy(() => import('../pages/Login/LoginPage'))
 const RegisterPage = lazy(() => import('../pages/Register/RegisterPage'))
-const HomePage = lazy(() => import('../pages/Home/HomePage'))
+// const HomePage = lazy(() => import('../pages/Home/HomePage'))
 const PlacesPage = lazy(() => import('../pages/Places/PlacesPage'))
 const PlacePage = lazy(() => import('../pages/Places/Place/PlacePage'))
 const ProfilePage = lazy(() => import('../pages/Profile/ProfilePage'))
@@ -26,6 +27,7 @@ const RoutesComponent = () => {
          fallback={<Spin style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '40vh' }} />}
       >
          <Routes>
+            <Route path="/" element={<RootRoute />} />
             <Route
                element={
                   <PrivateRoute>
@@ -42,7 +44,6 @@ const RoutesComponent = () => {
                <Route path="/documents/" element={<DocumentsPage />} />
                <Route path="/calendar-games/" element={<CalendarGames />} />
                <Route path="/games/*" element={<GamesRoutes />} />
-               <Route path="/" element={<HomePage />} />
                <Route path="*" element={<_404 />} />
             </Route>
             <Route
@@ -70,3 +71,4 @@ const RoutesComponent = () => {
 }
 
 export default RoutesComponent
+
